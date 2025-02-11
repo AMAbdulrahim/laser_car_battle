@@ -12,6 +12,16 @@
 .swiftpm/
 migrate_working_dir/
 
+# This is dynamic in a monorepo
+bin/internal/engine.version
+
+# Visual Studio Code related
+.classpath
+.project
+.settings/
+.vscode/*
+.ccls-cache
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -43,3 +53,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# packages file containing multi-root paths
+.packages.generated
+
+
