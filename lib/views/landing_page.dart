@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/widgets/buttons/main_bottom_button.dart';
+import 'package:laser_car_battle/widgets/custom/custom_app_bar.dart';
 import 'package:laser_car_battle/widgets/project_title.dart';
 
 class LandingPage extends StatelessWidget {
@@ -8,6 +9,12 @@ class LandingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: CustomAppBar(
+          titleText: "Laser Car Battle",
+        ),
+      ),
       body: Stack(
         children: [
           Center(
