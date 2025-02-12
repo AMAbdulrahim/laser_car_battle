@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'dart:ui';
 
+import 'package:laser_car_battle/utils/constants.dart';
+
 class CustomAppBar extends StatelessWidget {
   final String titleText;
   final bool showLeading;
@@ -27,7 +29,10 @@ class CustomAppBar extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: AppBar(
             centerTitle: true,
-            title: Text(titleText),
+            title: Text(
+              titleText,
+              style: TextStyle(fontSize: AppSizes.appBarTitle),
+            ),
             backgroundColor: CustomColors.appBarBackground,
             leading: showLeading
                 ? IconButton(

@@ -4,7 +4,7 @@ class AppSizes {
   static const double fontMedium = 16.0;
   static const double fontLarge = 20.0;
   static const double fontTitle = 70.0;
-  static const double appBarTitle = 24.0;
+  static const double appBarTitle = 40.0;
 
 
   // Border sizes

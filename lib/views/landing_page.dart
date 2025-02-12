@@ -40,7 +40,10 @@ class LandingPage extends StatelessWidget {
               child: TitleText(),
             ),
             ),
-          MainBottomButton(buttonText: "Enter Your Name"),
+          MainBottomButton(
+            buttonText: "Enter Your Name",
+            onPressed: () => Navigator.of(context).pushNamed('/login'),
+            ),
         ],
       ),
     );
