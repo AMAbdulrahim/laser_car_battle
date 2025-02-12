@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:laser_car_battle/widgets/buttons/main_bottom_button.dart';
+import 'package:laser_car_battle/widgets/project_title.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
@@ -9,37 +11,9 @@ class LandingPage extends StatelessWidget {
       body: Stack(
         children: [
           Center(
-            child: Text(
-              'Team 57',
-              style: TextStyle(
-                
-                fontSize: 50,
-              ),
-            ),
+            child: TitleText(),
           ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              
-              Spacer(),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 60, // Set the height of the button
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Add your onPressed code here!
-                    },
-                    child: Text('Enter Your Name'),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20), 
-
-            
-            ],
-          ),
+          MainBottomButton(buttonText: "Enter Your Name"),
         ],
       ),
     );
