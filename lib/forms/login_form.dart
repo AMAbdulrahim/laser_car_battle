@@ -24,7 +24,7 @@ class LoginForm extends StatelessWidget {
             buttonText: 'Login',
             onPressed: () {
               if (_formKey.currentState?.validate() ?? false) {
-                Navigator.of(context).popAndPushNamed('/home');
+                Navigator.of(context).popAndPushNamed('/');
               }
             },
           ),
