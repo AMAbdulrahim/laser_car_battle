@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/assets/theme/fonts/custom_fonts.dart';
+import 'package:laser_car_battle/utils/constants.dart';
 
 class CustomTheme {
   static final ThemeData darkTheme = ThemeData(
@@ -14,22 +15,22 @@ class CustomTheme {
       elevation: 4,
       titleTextStyle: CustomFonts.primaryFont.copyWith(
         color: CustomColors.textPrimary,
-        fontSize: 24,
+        fontSize: AppSizes.appBarTitle,
       ),
     ),
 
     textTheme: TextTheme(
       bodyLarge: CustomFonts.primaryFont.copyWith(
         color: CustomColors.textPrimary,
-        fontSize: 18,
+        fontSize: AppSizes.fontLarge,
       ),
       bodyMedium: CustomFonts.primaryFont.copyWith(
         color: CustomColors.textPrimary,
-        fontSize: 16,
+        fontSize: AppSizes.fontMedium,
       ),
       labelLarge: CustomFonts.primaryFont.copyWith(
         color: CustomColors.buttonText,
-        fontSize: 16,
+        fontSize: AppSizes.fontSmall,
       ),
     ),
 
