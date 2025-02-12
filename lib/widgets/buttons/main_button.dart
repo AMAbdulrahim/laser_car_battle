@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 class MainButton extends StatelessWidget {
   final String buttonText;
+  final VoidCallback? onPressed;
 
   const MainButton({
     super.key,
     required this.buttonText,
+    this.onPressed,
   });
 
   @override
@@ -16,9 +18,7 @@ class MainButton extends StatelessWidget {
         width: double.infinity,
         height: 60, // Set the height of the button
         child: ElevatedButton(
-          onPressed: () {
-            // Add your onPressed code here!
-          },
+          onPressed: onPressed ?? () => Navigator.of(context).pop(),
           child: Text(buttonText),
         ),
       ),
