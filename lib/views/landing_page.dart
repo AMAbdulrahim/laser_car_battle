@@ -10,16 +10,36 @@ class LandingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+        preferredSize: Size.fromHeight(220),
         child: CustomAppBar(
           titleText: "Laser Car Battle",
+          borderRadius: 0,
         ),
       ),
       body: Stack(
         children: [
-          Center(
-            child: TitleText(),
+          Positioned(
+            top: 0, // Start from the end of the app bar
+            left: 0,
+            right: 0,
+            height: 400, // Set the desired height of the red box
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(83, 79, 0, 0),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(25), // Add bottom border radius
+                ),
+              ),
+            ),
           ),
+            Positioned(
+            top: 100, 
+            left: 0,
+            right: 0,
+            child: Center(
+              child: TitleText(),
+            ),
+            ),
           MainBottomButton(buttonText: "Enter Your Name"),
         ],
       ),

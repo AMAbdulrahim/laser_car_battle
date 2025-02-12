@@ -10,7 +10,7 @@ class CustomTheme {
     primaryColor: CustomColors.mainButton,
 
     appBarTheme: AppBarTheme(
-      backgroundColor: CustomColors.backgroundEffect,
+      backgroundColor: const Color.fromARGB(196, 79, 0, 0),
       foregroundColor: CustomColors.textPrimary,
       elevation: 4,
       titleTextStyle: CustomFonts.primaryFont.copyWith(
