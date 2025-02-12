@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laser_car_battle/assets/theme/custom_theme.dart';
 import 'package:laser_car_battle/views/landing_page.dart';
 
 void main() {
@@ -14,11 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
-      theme: ThemeData(
-     
-       
-        useMaterial3: true,
-      ),
+      theme: CustomTheme.darkTheme,
       home: LandingPage(),
     );
   }
