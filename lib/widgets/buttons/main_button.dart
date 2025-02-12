@@ -17,7 +17,7 @@ class MainButton extends StatelessWidget {
       padding: const EdgeInsets.all(AppSizes.paddingMedium),
       child: SizedBox(
         width: double.infinity,
-        height: 60, // Set the height of the button
+        height: AppSizes.buttonHeight, // Set the height of the button
         child: ElevatedButton(
           onPressed: onPressed ?? () => Navigator.of(context).pop(),
           

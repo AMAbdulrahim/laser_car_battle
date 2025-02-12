@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 
 class CustomTextfield extends StatefulWidget {
@@ -10,18 +11,17 @@ class CustomTextfield extends StatefulWidget {
   });
 
   @override
-  _CustomTextfieldState createState() => _CustomTextfieldState();
+  CustomTextfieldState createState() => CustomTextfieldState();
 }
 
-class _CustomTextfieldState extends State<CustomTextfield> {
-  Color _borderColor = Colors.grey;
+class CustomTextfieldState extends State<CustomTextfield> {
+  Color _borderColor = CustomColors.border;
 
   void _validateInput(String value) {
     final regex = RegExp(r'^[a-zA-Z][a-zA-Z0-9]{2,19}$');
     setState(() {
       if (!regex.hasMatch(value)) {
         _borderColor = Colors.red;
-        
       } else {
         _borderColor = Colors.green;
       }
@@ -32,10 +32,10 @@ class _CustomTextfieldState extends State<CustomTextfield> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(AppSizes.paddingMedium),
-      child: TextField(
+      child: TextFormField(
         decoration: InputDecoration(
           labelText: widget.labelText,
-            helperText: "3-20 charachters, start with a letter.",
+          helperText: "3-20 characters, start with a letter.",
           border: OutlineInputBorder(
             borderSide: BorderSide(color: _borderColor),
           ),
@@ -47,6 +47,15 @@ class _CustomTextfieldState extends State<CustomTextfield> {
           ),
         ),
         onChanged: _validateInput,
+        validator: (value) {
+          final regex = RegExp(r'^[a-zA-Z][a-zA-Z0-9]{2,19}$');
+          if (value == null || value.isEmpty) {
+            return 'Please enter some text';
+          } else if (!regex.hasMatch(value)) {
+            return 'Please enter a valid input (3-20 characters, start with a letter, letters and numbers only)';
+          }
+          return null;
+        },
       ),
     );
   }

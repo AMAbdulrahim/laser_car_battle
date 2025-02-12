@@ -17,5 +17,7 @@ class AppSizes {
   static const double paddingMedium = 16.0;
   static const double paddingLarge = 24.0;
 
+  // Button sizes
+  static const double buttonHeight = 60.0;
 
 }
