@@ -5,6 +5,7 @@ class AppSizes {
   static const double fontLarge = 20.0;
   static const double fontTitle = 70.0;
   static const double appBarTitle = 40.0;
+  static const double fontMain = 30.0;	
 
 
   // Border sizes
@@ -19,5 +20,8 @@ class AppSizes {
 
   // Button sizes
   static const double buttonHeight = 60.0;
+  static const double actionButtonWidth = 60.0;
+  static const double actionButtonHeight = 40.0;
+
 
 }
