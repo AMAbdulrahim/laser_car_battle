@@ -26,7 +26,17 @@ class BTConnectionPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-                const SizedBox(height: AppSizes.paddingLarge * 4),
+                const SizedBox(height: AppSizes.paddingLarge * 2),
+
+                Container(
+                  height: AppSizes.paddingLarge * 4,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    // color: Colors.grey[300],
+                    //borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: const Text("Hi AliXXXXXXXXXXXX,", style: TextStyle(fontSize: AppSizes.fontMain),),
+                ),
 
                 StatusCard(
                   checkStatus: isConnectedPlayer,

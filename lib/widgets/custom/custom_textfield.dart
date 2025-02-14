@@ -18,7 +18,7 @@ class CustomTextfieldState extends State<CustomTextfield> {
   Color _borderColor = CustomColors.border;
 
   void _validateInput(String value) {
-    final regex = RegExp(r'^[a-zA-Z][a-zA-Z0-9]{2,19}$');
+    final regex = RegExp(r'^[a-zA-Z][a-zA-Z0-9]{2,14}$');
     setState(() {
       if (!regex.hasMatch(value)) {
         _borderColor = Colors.red;
@@ -35,7 +35,7 @@ class CustomTextfieldState extends State<CustomTextfield> {
       child: TextFormField(
         decoration: InputDecoration(
           labelText: widget.labelText,
-          helperText: "3-20 characters, start with a letter.",
+          helperText: "3-15 characters, start with a letter.",
           border: OutlineInputBorder(
             borderSide: BorderSide(color: _borderColor),
           ),
@@ -52,7 +52,7 @@ class CustomTextfieldState extends State<CustomTextfield> {
           if (value == null || value.isEmpty) {
             return 'Please enter some text';
           } else if (!regex.hasMatch(value)) {
-            return 'Please enter a valid input (3-20 characters, start with a letter, letters and numbers only)';
+            return 'Please enter a valid input (3-15 characters, start with a letter, letters and numbers only)';
           }
           return null;
         },
