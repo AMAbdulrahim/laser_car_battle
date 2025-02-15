@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/utils/constants.dart';
-import 'package:laser_car_battle/viewmodels/login_viewmodel.dart';
+import 'package:laser_car_battle/viewmodels/player_viewmodel.dart';
 import 'package:laser_car_battle/widgets/buttons/action_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_app_bar.dart';
 import 'package:laser_car_battle/widgets/status_card.dart';
@@ -15,7 +15,7 @@ class BTConnectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final userName = context.watch<LoginViewModel>().userName;
+    final userName = context.watch<LoginViewModel>().playerName;
     
     return Scaffold(
       appBar: PreferredSize(

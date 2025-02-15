@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:laser_car_battle/viewmodels/player_viewmodel.dart';
 import 'package:laser_car_battle/widgets/buttons/main_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_textfield.dart';
 import 'package:provider/provider.dart';
-import 'package:laser_car_battle/viewmodels/login_viewmodel.dart';
 
 class LoginForm extends StatelessWidget {
   const LoginForm({
@@ -29,7 +29,7 @@ class LoginForm extends StatelessWidget {
             buttonText: 'Login',
             onPressed: () {
               if (_formKey.currentState?.validate() ?? false) {
-                context.read<LoginViewModel>().setUserName(nameController.text);
+                context.read<LoginViewModel>().setplayerName(nameController.text);
                 Navigator.of(context).pushNamed('/connect');
 
               }
