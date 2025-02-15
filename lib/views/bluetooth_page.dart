@@ -15,7 +15,7 @@ class BTConnectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final userName = context.watch<LoginViewModel>().playerName;
+    final playerName = context.watch<LoginViewModel>().getplayerName();
     
     return Scaffold(
       appBar: PreferredSize(
@@ -37,7 +37,7 @@ class BTConnectionPage extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(),
                 child: Text(
-                  "Hi, $userName",
+                  "Hi, $playerName",
                   style: const TextStyle(
                     fontSize: AppSizes.fontMain,
                     shadows: [
