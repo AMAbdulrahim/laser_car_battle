@@ -4,10 +4,12 @@ import 'package:laser_car_battle/utils/constants.dart';
 
 class CustomTextfield extends StatefulWidget {
   final String labelText;
+  final TextEditingController? controller;
 
   const CustomTextfield({
     super.key,
     required this.labelText,
+    this.controller,
   });
 
   @override
@@ -33,6 +35,7 @@ class CustomTextfieldState extends State<CustomTextfield> {
     return Padding(
       padding: const EdgeInsets.all(AppSizes.paddingMedium),
       child: TextFormField(
+        controller: widget.controller,
         decoration: InputDecoration(
           labelText: widget.labelText,
           helperText: "3-15 characters, start with a letter.",

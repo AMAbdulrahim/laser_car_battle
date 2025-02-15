@@ -111,3 +111,4 @@ app.*.symbols
 !.vscode/tasks.json
 macos/Flutter/GeneratedPluginRegistrant.swift
 windows/flutter/generated_plugin_registrant.cc
+devtools_options.yaml
