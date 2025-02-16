@@ -1,23 +1,15 @@
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:laser_car_battle/viewmodels/player_viewmodel.dart';
+import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
+import 'package:provider/single_child_widget.dart';
 
-class AppProviders extends StatelessWidget {
-  final Widget child;
-
-  const AppProviders({
-    super.key,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => LoginViewModel()),
-        // Add more providers here as needed
-      ],
-      child: child,
-    );
-  }
+List<SingleChildWidget> getProviders() {
+  return [
+    ChangeNotifierProvider<PlayerViewModel>(
+      create: (_) => PlayerViewModel(),
+    ),
+    ChangeNotifierProvider<GameViewModel>(
+      create: (_) => GameViewModel(),
+    ),
+  ];
 }

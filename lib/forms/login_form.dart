@@ -29,9 +29,8 @@ class LoginForm extends StatelessWidget {
             buttonText: 'Login',
             onPressed: () {
               if (_formKey.currentState?.validate() ?? false) {
-                context.read<LoginViewModel>().setplayerName(nameController.text);
+                context.read<PlayerViewModel>().setPlayerName(nameController.text);
                 Navigator.of(context).pushNamed('/connect');
-
               }
             },
           ),
