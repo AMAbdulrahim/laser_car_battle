@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:laser_car_battle/assets/theme/custom_theme.dart';
 import 'package:laser_car_battle/routes.dart';
 import 'package:provider/provider.dart';
 import 'package:laser_car_battle/providers/providers.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const MyApp());
 }
 
