@@ -11,7 +11,7 @@ class AppSizes {
   // Border sizes
   static const double borderSmall = 1.0;
   static const double borderMedium = 2.0;
-  static const double borderLarge = 3.0;
+  static const double borderLarge = 10.0;
 
   // Padding sizes
   static const double paddingSmall = 8.0;

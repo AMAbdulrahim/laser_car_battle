@@ -15,7 +15,7 @@ class BTConnectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final playerName = context.watch<LoginViewModel>().getplayerName();
+    final playerName = context.watch<PlayerViewModel>().playerName;
     
     return Scaffold(
       appBar: PreferredSize(
@@ -62,7 +62,9 @@ class BTConnectionPage extends StatelessWidget {
               SizedBox(height: AppSizes.paddingLarge * 1.5),
               if (isConnectedOpponent && true && isConnectedPlayer) ...[
                 ActionButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/gameMode');
+                  },
                   buttonText: "Game Mode", 
                 ),
               ]
