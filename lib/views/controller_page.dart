@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/widgets/custom/custom_app_bar.dart';
+import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
+import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
 
 class RemoteController extends StatefulWidget {
   const RemoteController({super.key});
@@ -142,25 +144,23 @@ class _RemoteControllerState extends State<RemoteController> {
             child: Row(
               children: [
                 // Brake control widget
-                Container(
+                BrakeButton(
+                  onPressed: () {
+                    print('Brake pressed!');
+                  },
                   width: 100,
                   height: 150,
-                  margin: const EdgeInsets.only(right: AppSizes.paddingMedium),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Center(child: Text('Brake')),
                 ),
                 // Fire button control widget
-                Container(
-                  width: 150,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(10),
+                Padding(
+                  padding: EdgeInsets.only(left: AppSizes.paddingLarge),
+                  child: FireButton(
+                    onPressed: () {
+                      // Handle fire action
+                      print('Fire!');
+                    },
+                    size: 150,
                   ),
-                  child: const Center(child: Text('Fire button')),
                 ),
               ],
             ),

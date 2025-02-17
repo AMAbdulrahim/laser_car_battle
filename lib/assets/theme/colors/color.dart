@@ -12,6 +12,7 @@ class CustomColors {
   static const Color appBarBackground = Color(0xe64f0000); 
   static const Color appBarBackgroundExtension = Color(0x804f0000); 
   static const Color effectColor =  Color.fromARGB(128, 0, 0, 0);
+  static const Color fireButton =  Color(0xFFFF5722);
 
 }
 
