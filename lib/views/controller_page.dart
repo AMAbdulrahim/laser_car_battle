@@ -4,6 +4,8 @@ import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
 import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_joystick.dart';
+import 'package:provider/provider.dart';
+import 'package:laser_car_battle/viewmodels/car_controller_viewmodel.dart';
 
 class RemoteController extends StatefulWidget {
   const RemoteController({super.key});
@@ -33,6 +35,7 @@ class _RemoteControllerState extends State<RemoteController> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Provider.of<CarControllerViewModel>(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -146,7 +149,10 @@ class _RemoteControllerState extends State<RemoteController> {
                 // Brake control widget
                 BrakeButton(
                   onPressed: () {
-                    print('Brake pressed!');
+                    controller.setBrakeState(true);
+                  },
+                  onReleased: () {
+                    controller.setBrakeState(false);
                   },
                   width: 100,
                   height: 150,
@@ -156,8 +162,7 @@ class _RemoteControllerState extends State<RemoteController> {
                   padding: EdgeInsets.only(left: AppSizes.paddingLarge),
                   child: FireButton(
                     onPressed: () {
-                      // Handle fire action
-                      print('Fire!');
+                      controller.fire();
                     },
                     size: 150,
                   ),
@@ -170,7 +175,14 @@ class _RemoteControllerState extends State<RemoteController> {
           Positioned(
             bottom: AppSizes.paddingLarge +10,
             right: AppSizes.paddingLarge +30,
-            child: CustomJoystick(),
+            child: CustomJoystick(
+              listener: (details) {
+                double sensitivityFactor = 0.7;
+                double scaledX = details.x * sensitivityFactor;
+                double scaledY = details.y * sensitivityFactor;
+                controller.updateJoystickPosition(scaledX, scaledY);
+              },
+            ),
           ),
         ],
       ),

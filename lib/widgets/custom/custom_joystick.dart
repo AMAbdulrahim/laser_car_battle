@@ -6,7 +6,7 @@ import 'package:laser_car_battle/utils/constants.dart';
 
 class CustomJoystick extends StatelessWidget {
   const CustomJoystick({
-    super.key,
+    super.key, required Null Function(dynamic details) listener,
   });
 
   @override

@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 
 class BrakeButton extends StatefulWidget {
   final VoidCallback onPressed;
+  final VoidCallback onReleased;
   final double width;
   final double height;
 
   const BrakeButton({
     super.key,
     required this.onPressed,
+    required this.onReleased,
     this.width = 100,
     this.height = 150,
   });
@@ -28,10 +30,12 @@ class _BrakeButtonState extends State<BrakeButton> {
 
   void _handleTapUp(TapUpDetails details) {
     setState(() => _isPressed = false);
+    widget.onReleased();
   }
 
   void _handleTapCancel() {
     setState(() => _isPressed = false);
+    widget.onReleased();
   }
 
   @override
