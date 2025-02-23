@@ -24,4 +24,7 @@ class AppSizes {
   static const double actionButtonHeight = 40.0;
 
 
+  // Joystick sizes
+  static const double joystickBaseSize = 200.0;
+  static const double joystickKnobSize = 80.0;
 }

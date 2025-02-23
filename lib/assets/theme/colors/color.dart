@@ -13,6 +13,9 @@ class CustomColors {
   static const Color appBarBackgroundExtension = Color(0x804f0000); 
   static const Color effectColor =  Color.fromARGB(128, 0, 0, 0);
   static const Color fireButton =  Color(0xFFFF5722);
+  static const Color joystickBase =  Color(0xFF37474F);
+  static const Color joystickKnob =  Color(0xFF80CBC4);
+
 
 }
 

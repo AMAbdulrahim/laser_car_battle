@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:laser_car_battle/utils/constants.dart';
-import 'package:laser_car_battle/widgets/custom/custom_app_bar.dart';
 import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
 import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
+import 'package:laser_car_battle/widgets/custom/custom_joystick.dart';
 
 class RemoteController extends StatefulWidget {
   const RemoteController({super.key});
@@ -50,7 +50,7 @@ class _RemoteControllerState extends State<RemoteController> {
               child: const Center(child: Text('settings')),
             ),
           ),
-          // insights widget
+          // Insights widget
           Positioned(
             top: AppSizes.paddingLarge,
             right: AppSizes.paddingMedium,
@@ -169,19 +169,12 @@ class _RemoteControllerState extends State<RemoteController> {
           // Joystick Widget
           Positioned(
             bottom: AppSizes.paddingLarge +10,
-            right: AppSizes.paddingLarge + 20,
-            child: Container(
-              width: 175,
-              height: 175,
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(child: Text('Joystick')),
-            ),
+            right: AppSizes.paddingLarge +30,
+            child: CustomJoystick(),
           ),
         ],
       ),
     );
   }
 }
+

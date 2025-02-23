@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'dart:async';
 
-import 'package:laser_car_battle/utils/constants.dart';
 
 class FireButton extends StatefulWidget {
   final VoidCallback onPressed;
