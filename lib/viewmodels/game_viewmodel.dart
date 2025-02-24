@@ -2,37 +2,40 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:vibration/vibration.dart';
 
-// Add at the top of the class with other properties
+/// Custom typedef for game over callback to improve code readability and type safety
 typedef GameOverCallback = void Function();
 
 /// GameViewModel manages the game state and timer functionality
+/// Implements ChangeNotifier for reactive UI updates using the Observer pattern
 class GameViewModel extends ChangeNotifier {
-  // Game state properties
-  String? _gameMode;     // Current game mode ('Time' or 'Points')
-  int? _gameValue;       // Target value (minutes for Time mode, points for Points mode)
-  Timer? _timer;         // Timer instance for tracking game time
-  int _timeInSeconds = 0; // Current time elapsed/remaining in seconds
-  bool _isGameActive = false; // Flag to track if game is running
-  bool _isFlashing = false; // Flash state
-  Timer? _flashTimer;
-  Timer? _vibrationTimer; // Add new property for vibration
+  // Private fields use underscore prefix for proper encapsulation
+  // Nullable types (?) indicate optional values that may not be set immediately
+  String? _gameMode;     // Tracks game mode with null safety
+  int? _gameValue;       // Flexible value storage for different game modes
+  Timer? _timer;         // Cancellable timer for game duration
+  int _timeInSeconds = 0;// Tracks elapsed/remaining time
+  bool _isGameActive = false; // Game state flag for UI updates
+  bool _isFlashing = false;   // Visual feedback state
+  Timer? _flashTimer;         // Separate timer for flash animation
+  Timer? _vibrationTimer;     // Dedicated timer for haptic feedback
 
-  // Add points-related properties
-  int _player1Points = 0;
-  int _player2Points = 0;
-  int? _targetPoints; // Points to win (for Points mode)
+  // Points tracking system with initial values
+  int _player1Points = 0;     // Score counter for player 1
+  int _player2Points = 0;     // Score counter for player 2
+  int? _targetPoints;         // Win condition for points mode
 
-  // Add winner property
-  String? _winner;
+  // Game outcome tracking
+  String? _winner;            // Stores winner name, null if game ongoing
 
-  // Add callback property
-  GameOverCallback? _onGameOver;
+  // Callback for game end events
+  GameOverCallback? _onGameOver;  // Allows external response to game completion
 
-  // Add player name properties
-  String _player1Name = 'Player 1';
+  // Player identification
+  String _player1Name = 'Player 1';  // Default names with meaningful values
   String _player2Name = 'Player 2';
 
-  // Getters for accessing private properties
+  // Public getters provide controlled access to private state
+  // Maintaining encapsulation while allowing read access
   String? get gameMode => _gameMode;
   int? get gameValue => _gameValue;
   bool get isGameActive => _isGameActive;
@@ -65,7 +68,8 @@ class GameViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Add getter for text color
+  /// Dynamic timer color based on game state
+  /// Returns red during final countdown, white otherwise
   Color get timerColor {
     if (_gameMode == 'Time' && _gameValue != null) {
       int remainingTime = (_gameValue! * 60) - _timeInSeconds;
@@ -76,9 +80,8 @@ class GameViewModel extends ChangeNotifier {
     return Colors.white;
   }
 
-  /// Returns formatted time string in MM:SS format
-  /// For Time mode: shows countdown from selected minutes
-  /// For other modes: shows elapsed time
+  /// Formats time display in MM:SS format
+  /// Handles both countdown and count-up scenarios
   String get formattedTime {
     if (_gameMode == 'Time' && _gameValue != null) {
       // Calculate remaining time for countdown
@@ -102,7 +105,8 @@ class GameViewModel extends ChangeNotifier {
     }
   }
 
-  /// Starts the game timer and initializes game state
+  /// Initializes and starts the game session
+  /// Sets up timers, resets state, and manages game flow
   void startGame() {
     _isGameActive = true;
     _timeInSeconds = 0;
@@ -142,6 +146,8 @@ class GameViewModel extends ChangeNotifier {
     });
   }
 
+  /// Manages visual feedback for last 30 seconds
+  /// Uses alternating boolean state for flash effect
   void _startFlashing() {
     _flashTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       _isFlashing = !_isFlashing;
@@ -149,7 +155,8 @@ class GameViewModel extends ChangeNotifier {
     });
   }
 
-  /// Handles vibration for last 10 seconds
+  /// Implements haptic feedback for final countdown
+  /// Includes device capability check and error handling
   void _startVibrating() async {
     // First check if device has vibration capability
     bool? hasVibrator = await Vibration.hasVibrator();
@@ -168,7 +175,8 @@ class GameViewModel extends ChangeNotifier {
     }
   }
 
-  /// Stops the game and cancels the timer
+  /// Gracefully terminates game session
+  /// Cleans up resources and triggers callbacks
   void stopGame() {
     _isGameActive = false;
     _timer?.cancel();
@@ -184,9 +192,9 @@ class GameViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sets up game configuration
-  /// @param mode: Game mode ('Time' or 'Points')
-  /// @param value: Target value (minutes for Time mode, points for Points mode)
+  /// Configures game parameters
+  /// @param mode Determines game type
+  /// @param value Sets win condition
   void setGameSettings(String mode, int value) {
     _gameMode = mode;
     if (mode == 'Points') {
@@ -198,7 +206,8 @@ class GameViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Add point management methods
+  /// Score management methods
+  /// Increment points and check win conditions
   void addPointToPlayer1() {
     _player1Points++;
     _checkWinCondition();
@@ -211,12 +220,15 @@ class GameViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Resets score counters to initial state
   void resetPoints() {
     _player1Points = 0;
     _player2Points = 0;
     notifyListeners();
   }
 
+  /// Evaluates if win conditions are met
+  /// Handles both time and points based modes
   void _checkWinCondition() {
     if (_gameMode == 'Points' && _targetPoints != null) {
       if (_player1Points >= _targetPoints!) {
@@ -232,6 +244,8 @@ class GameViewModel extends ChangeNotifier {
     }
   }
 
+  /// Determines winner in time mode
+  /// Considers point totals and handles ties
   void _determineWinnerForTimeMode() {
     if (_player1Points > _player2Points) {
       _winner = _player1Name;
@@ -242,7 +256,8 @@ class GameViewModel extends ChangeNotifier {
     }
   }
 
-  /// Resets all game settings to initial state
+  /// Complete game state reset
+  /// Returns all values to initial state
   void clearGameSettings() {
     _gameMode = null;
     _gameValue = null;
@@ -259,14 +274,16 @@ class GameViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Add method to set player names
+  /// Updates player identifiers
+  /// Maintains consistency in display names
   void setPlayerNames(String player1, String player2) {
     _player1Name = player1;
     _player2Name = player2;
     notifyListeners();
   }
 
-  /// Cleanup resources when the ViewModel is disposed
+  /// Resource cleanup
+  /// Ensures proper disposal of timers and vibration
   @override
   void dispose() {
     _timer?.cancel();
