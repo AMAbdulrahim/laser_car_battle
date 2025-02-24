@@ -27,13 +27,12 @@ class _RemoteControllerState extends State<RemoteController> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Set up game over callback
       final gameViewModel = Provider.of<GameViewModel>(context, listen: false);
       gameViewModel.onGameOver = () {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const GameOverPage(),
-          ),
+        // Clear the stack and replace with GameOverPage
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/game-over',
+          (Route<dynamic> route) => false,
         );
       };
       

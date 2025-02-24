@@ -34,6 +34,9 @@ class GameViewModel extends ChangeNotifier {
   String _player1Name = 'Player 1';  // Default names with meaningful values
   String _player2Name = 'Player 2';
 
+  // Add elapsed time tracking
+  int _elapsedSeconds = 0;
+
   // Public getters provide controlled access to private state
   // Maintaining encapsulation while allowing read access
   String? get gameMode => _gameMode;
@@ -51,6 +54,9 @@ class GameViewModel extends ChangeNotifier {
   // Add getters for player names
   String get player1Name => _player1Name;
   String get player2Name => _player2Name;
+
+  // Add getter
+  int get elapsedSeconds => _elapsedSeconds;
 
   // Add setter for callback
   set onGameOver(GameOverCallback callback) {
@@ -83,26 +89,9 @@ class GameViewModel extends ChangeNotifier {
   /// Formats time display in MM:SS format
   /// Handles both countdown and count-up scenarios
   String get formattedTime {
-    if (_gameMode == 'Time' && _gameValue != null) {
-      // Calculate remaining time for countdown
-      int totalSeconds = _gameValue! * 60;    // Convert minutes to seconds
-      int remainingTime = totalSeconds - _timeInSeconds;
-      
-      // Simply return 00:00 if time is up, let the timer handle stopping
-      if (remainingTime <= 0) {
-        return '00:00';
-      }
-
-      // Convert remaining seconds to minutes and seconds
-      int minutes = remainingTime ~/ 60;
-      int seconds = remainingTime % 60;
-      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    } else {
-      // Format elapsed time for non-time modes
-      int minutes = _timeInSeconds ~/ 60;
-      int seconds = _timeInSeconds % 60;
-      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    }
+    int minutes = _elapsedSeconds ~/ 60;
+    int seconds = _elapsedSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   /// Initializes and starts the game session
@@ -110,6 +99,7 @@ class GameViewModel extends ChangeNotifier {
   void startGame() {
     _isGameActive = true;
     _timeInSeconds = 0;
+    _elapsedSeconds = 0;
     _timer?.cancel();  // Cancel any existing timer
     _flashTimer?.cancel();
 
@@ -139,8 +129,8 @@ class GameViewModel extends ChangeNotifier {
         
         notifyListeners();
       } else {
-        // Other modes: Simply increment time
-        _timeInSeconds++;
+        // Points mode: track elapsed time
+        _elapsedSeconds++;
         notifyListeners();
       }
     });
