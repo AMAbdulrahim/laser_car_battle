@@ -4,6 +4,7 @@ import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
+import 'package:share_plus/share_plus.dart';
 
 class GameOverPage extends StatefulWidget {
   const GameOverPage({super.key});
@@ -31,90 +32,136 @@ class _GameOverPageState extends State<GameOverPage> {
     super.dispose();
   }
 
+  void _shareResults(GameViewModel gameViewModel) {
+    final String result = gameViewModel.winner == 'Draw'
+        ? 'Game ended in a Draw!'
+        : '${gameViewModel.winner} Won!';
+    
+    final String message = '''
+🎮 Laser Car Battle Results 🚗
+$result
+Final Score: ${gameViewModel.player1Points} - ${gameViewModel.player2Points}
+Game Mode: ${gameViewModel.gameMode}
+''';
+
+    Share.share(message);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Container(
-          padding: const EdgeInsets.all(AppSizes.paddingLarge),
-          child: Row(  // Changed from Column to Row
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Consumer<GameViewModel>(
-                  builder: (context, gameViewModel, child) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Game Over!',
-                          style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: CustomColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          gameViewModel.winner == 'Draw'
-                              ? 'It\'s a Draw!'
-                              : '${gameViewModel.winner} Wins!',
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: CustomColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Final Score',
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: CustomColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          '${gameViewModel.player1Points} - ${gameViewModel.player2Points}',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: CustomColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: CustomColors.mainButton,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
-                              vertical: 20,
-                            ),
-                          ),
-                          onPressed: () {
-                            Provider.of<GameViewModel>(context, listen: false)
-                                .clearGameSettings();
-                            Navigator.of(context).pushNamedAndRemoveUntil(
-                              '/',
-                              (Route<dynamic> route) => false,
-                            );
-                          },
-                          child: Text(
-                            'Back to Menu',
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: CustomColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+      body: Stack(
+        children: [
+          // Main content centered
+          Center(
+            child: Container(
+              padding: const EdgeInsets.only(
+                top: AppSizes.paddingLarge * 2, // Extra padding for share button
+                left: AppSizes.paddingLarge,
+                right: AppSizes.paddingLarge,
+                bottom: AppSizes.paddingLarge,
               ),
-            ],
+              child: Consumer<GameViewModel>(
+                builder: (context, gameViewModel, child) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Game Over!',
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: CustomColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        gameViewModel.winner == 'Draw'
+                            ? 'It\'s a Draw!'
+                            : '${gameViewModel.winner} Wins!',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: CustomColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Final Score',
+                        style: TextStyle(
+                          fontSize: 24,
+                          color: CustomColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '${gameViewModel.player1Points} - ${gameViewModel.player2Points}',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: CustomColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Material(  // Wrap button with Material
+                            color: Colors.transparent,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: CustomColors.mainButton,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                  vertical: 20,
+                                ),
+                              ),
+                              onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                                '/',
+                                (Route<dynamic> route) => false,
+                              ),
+                              child: Text(
+                                'Back to Menu',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  color: CustomColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
-        ),
+          // Share button on top
+          Positioned(
+            top: AppSizes.paddingLarge,
+            right: AppSizes.paddingMedium,
+            child: Consumer<GameViewModel>(
+              builder: (context, gameViewModel, child) {
+                return Material(  // Wrap IconButton with Material
+                  color: Colors.transparent,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.share,
+                      color: CustomColors.textPrimary,
+                      size: 32,
+                    ),
+                    onPressed: () => _shareResults(gameViewModel),
+                    style: IconButton.styleFrom(
+                      backgroundColor: CustomColors.mainButton,
+                      padding: const EdgeInsets.all(12),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
