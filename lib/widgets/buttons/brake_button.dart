@@ -6,6 +6,7 @@ class BrakeButton extends StatefulWidget {
   final VoidCallback onReleased;
   final double width;
   final double height;
+  final bool isRightBrake;
 
   const BrakeButton({
     super.key,
@@ -13,6 +14,7 @@ class BrakeButton extends StatefulWidget {
     required this.onReleased,
     this.width = 100,
     this.height = 150,
+    this.isRightBrake = false,
   });
 
   @override
@@ -49,7 +51,12 @@ class _BrakeButtonState extends State<BrakeButton> {
         width: widget.width,
         height: widget.height,
         transform: Matrix4.translationValues(0, _isPressed ? 10 : 0, 0),
-        child: Image.asset('lib/assets/images/brake.png', fit: BoxFit.cover),
+        child: Image.asset(
+          widget.isRightBrake 
+              ? 'lib/assets/images/right-brake.png'
+              : 'lib/assets/images/brake.png',
+          fit: BoxFit.cover
+        ),
       ),
     );
   }

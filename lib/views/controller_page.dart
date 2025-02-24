@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/views/game_over_page.dart';
 import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
 import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_joystick.dart';
+import 'package:laser_car_battle/widgets/insights.dart';
 import 'package:laser_car_battle/widgets/score_board.dart';
 import 'package:provider/provider.dart';
 import 'package:laser_car_battle/viewmodels/car_controller_viewmodel.dart';
 import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
+import 'package:laser_car_battle/widgets/buttons/settings_dropdown.dart';
 
 class RemoteController extends StatefulWidget {
   const RemoteController({super.key});
@@ -18,6 +21,9 @@ class RemoteController extends StatefulWidget {
 }
 
 class _RemoteControllerState extends State<RemoteController> {
+  // Add state variable for control position
+  bool _controlsOnLeft = true;
+
   @override
   void initState() {
     super.initState();
@@ -57,90 +63,82 @@ class _RemoteControllerState extends State<RemoteController> {
         return Scaffold(
           body: Stack(
             children: [
-              // Settings Indicator
+              // Settings Popup Menu widget
               Positioned(
                 top: AppSizes.paddingLarge,
                 left: AppSizes.paddingMedium,
-                child: Container(
-                  width: 75,
-                  height: 75,
-                  decoration: BoxDecoration(
-                    //color: Colors.green.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: IconButton(
-                    icon:  Icon(
-                      Icons.settings_sharp,
-                      size: AppSizes.iconSize,
-                    ),
-                    onPressed: () {
-                      // Handle settings button press
-                      print('Settings pressed');
-                    },
-                  ),
+                child: SettingsDropdown(
+                  onToggleControls: () {
+                    setState(() {
+                      _controlsOnLeft = !_controlsOnLeft;
+                    });
+                  },
                 ),
               ),
               // Insights widget
               Positioned(
                 top: AppSizes.paddingLarge,
                 right: AppSizes.paddingMedium,
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    //color: Colors.green.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: const Center(child: Text('')),
-                ),
+                child: Insights(),
               ),
-              // Top Center Widget
+              // Score Board Widget
               Positioned(
                 top: AppSizes.paddingLarge,
                 left: 0,
                 right: 0,
                 child: ScoreBoard(),
               ),
-
-              // Bottom Left Widget
+              //  Brake & Fire Controls Widget
               Positioned(
                 bottom: AppSizes.paddingLarge + 10,
-                left: AppSizes.paddingLarge + 10,
+                left: _controlsOnLeft ? AppSizes.paddingLarge + 10 : null,
+                right: _controlsOnLeft ? null : AppSizes.paddingLarge + 10,
                 child: Row(
-                  children: [
-                    // Brake control widget
-                    BrakeButton(
-                      onPressed: () {
-                        controller.setBrakeState(true);
-                      },
-                      onReleased: () {
-                        controller.setBrakeState(false);
-                      },
-                      width: 100,
-                      height: 150,
-                    ),
-                    // Fire button control widget
-                    Padding(
-                      padding: EdgeInsets.only(left: AppSizes.paddingLarge),
-                      child: FireButton(
-                        onPressed: () {
-                          controller.fire();
-                          
-                        },
+                  children: _controlsOnLeft 
+                  ? [
+                      // Left side controls
+                      BrakeButton(
+                        onPressed: () => controller.setBrakeState(true),
+                        onReleased: () => controller.setBrakeState(false),
+                        width: 100,
+                        height: 150,
+                        isRightBrake: false,
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: AppSizes.paddingLarge),
+                        child: FireButton(
+                          onPressed: () => controller.fire(),
+                          size: 150,
+                        ),
+                      ),
+                    ]
+                  : [
+                      // Right side controls
+                      FireButton(
+                        onPressed: () => controller.fire(),
                         size: 150,
                       ),
-                    ),
-                  ],
+                      Padding(
+                        padding: EdgeInsets.only(left: AppSizes.paddingLarge),
+                        child: BrakeButton(
+                          onPressed: () => controller.setBrakeState(true),
+                          onReleased: () => controller.setBrakeState(false),
+                          width: 100,
+                          height: 150,
+                          isRightBrake: true,
+                        ),
+                      ),
+                    ],
                 ),
               ),
-
               // Joystick Widget
               Positioned(
                 bottom: AppSizes.paddingLarge +10,
-                right: AppSizes.paddingLarge +30,
+                left: _controlsOnLeft ? null : AppSizes.paddingLarge +30,
+                right: _controlsOnLeft ? AppSizes.paddingLarge +30 : null,
                 child: CustomJoystick(
                   listener: (details) {
-                    double sensitivityFactor = 0.7;
+                    double sensitivityFactor = 0.75;
                     double scaledX = details.x * sensitivityFactor;
                     double scaledY = details.y * sensitivityFactor;
                     controller.updateJoystickPosition(scaledX, scaledY);
