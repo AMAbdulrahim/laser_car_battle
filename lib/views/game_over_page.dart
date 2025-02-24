@@ -5,6 +5,10 @@ import 'package:laser_car_battle/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
 import 'package:share_plus/share_plus.dart';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class GameOverPage extends StatefulWidget {
   const GameOverPage({super.key});
@@ -14,6 +18,8 @@ class GameOverPage extends StatefulWidget {
 }
 
 class _GameOverPageState extends State<GameOverPage> {
+  final GlobalKey _statsKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -32,23 +38,29 @@ class _GameOverPageState extends State<GameOverPage> {
     super.dispose();
   }
 
-  void _shareResults(GameViewModel gameViewModel) {
-    final String result = gameViewModel.winner == 'Draw'
-        ? 'Game ended in a Draw!'
-        : '${gameViewModel.winner} Won!';
-    
-    final String timeInfo = gameViewModel.gameMode == 'Points'
-        ? '\nTime Elapsed: ${gameViewModel.formattedTime}'
-        : '';
-    
-    final String message = '''
-🎮 Laser Car Battle Results 🚗
-$result
-Final Score: ${gameViewModel.player1Points} - ${gameViewModel.player2Points}
-Game Mode: ${gameViewModel.gameMode}$timeInfo
-''';
-
-    Share.share(message);
+  Future<void> _shareResultsAsImage() async {
+    try {
+      // Capture the stats widget as an image
+      RenderRepaintBoundary boundary = _statsKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      
+      if (byteData != null) {
+        // Save to temporary file
+        final tempDir = await getTemporaryDirectory();
+        File file = File('${tempDir.path}/game_stats.png');
+        await file.writeAsBytes(byteData.buffer.asUint8List());
+        
+        // Share the image
+        await Share.shareXFiles(
+          [XFile(file.path)],
+            text: '🎮 Laser Car Battle Results 🚗\n\nTeam 57 project - check it out!',
+        );
+      }
+    } catch (e) {
+      print('Error sharing image: $e');
+    }
   }
 
   @override
@@ -72,61 +84,77 @@ Game Mode: ${gameViewModel.gameMode}$timeInfo
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'Game Over!',
-                          style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: CustomColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          gameViewModel.winner == 'Draw'
-                              ? 'It\'s a Draw!'
-                              : '${gameViewModel.winner} Wins!',
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: CustomColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Final Score',
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: CustomColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          '${gameViewModel.player1Points} - ${gameViewModel.player2Points}',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: CustomColors.textPrimary,
-                          ),
-                        ),
-                        if (gameViewModel.gameMode == 'Points') ...[
-                          const SizedBox(height: 20),
-                          Text(
-                            'Time Elapsed',
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: CustomColors.textPrimary,
+                        // Wrap stats in RepaintBoundary for image capture
+                        RepaintBoundary(
+                          key: _statsKey,
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: CustomColors.background,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Game Over!',
+                                  style: TextStyle(
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.bold,
+                                    color: CustomColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Text(
+                                  gameViewModel.winner == 'Draw'
+                                      ? 'It\'s a Draw!'
+                                      : '${gameViewModel.winner} Wins!',
+                                  style: TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
+                                    color: CustomColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Text(
+                                  'Final Score',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    color: CustomColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  '${gameViewModel.player1Points} - ${gameViewModel.player2Points}',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: CustomColors.textPrimary,
+                                  ),
+                                ),
+                                if (gameViewModel.gameMode == 'Points') ...[
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    'Time Elapsed',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      color: CustomColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    gameViewModel.formattedTime,
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: CustomColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          Text(
-                            gameViewModel.formattedTime,
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: CustomColors.textPrimary,
-                            ),
-                          ),
-                        ],
+                        ),
                         const SizedBox(height: 30),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -176,7 +204,7 @@ Game Mode: ${gameViewModel.gameMode}$timeInfo
                         color: CustomColors.textPrimary,
                         size: 32,
                       ),
-                      onPressed: () => _shareResults(gameViewModel),
+                      onPressed: _shareResultsAsImage,
                       style: IconButton.styleFrom(
                         backgroundColor: CustomColors.mainButton,
                         padding: const EdgeInsets.all(12),

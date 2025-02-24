@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:laser_car_battle/utils/constants.dart';
-import 'package:laser_car_battle/views/game_over_page.dart';
 import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
 import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_joystick.dart';
