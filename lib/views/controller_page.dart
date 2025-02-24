@@ -19,23 +19,25 @@ class RemoteController extends StatefulWidget {
 }
 
 class _RemoteControllerState extends State<RemoteController> {
-  // Add state variable for control position
   bool _controlsOnLeft = true;
+  late final GameViewModel _gameViewModel;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final gameViewModel = Provider.of<GameViewModel>(context, listen: false);
-      gameViewModel.onGameOver = () {
-        // Clear the stack and replace with GameOverPage
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/game-over',
-          (Route<dynamic> route) => false,
-        );
+      _gameViewModel = Provider.of<GameViewModel>(context, listen: false);
+      
+      _gameViewModel.onGameOver = () {
+        if (mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/game-over',
+            (Route<dynamic> route) => false,
+          );
+        }
       };
       
-      gameViewModel.startGame();
+      _gameViewModel.startGame();
     });
     
     SystemChrome.setPreferredOrientations([
@@ -46,6 +48,7 @@ class _RemoteControllerState extends State<RemoteController> {
 
   @override
   void dispose() {
+    _gameViewModel.stopGame(); // Use stored reference
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,

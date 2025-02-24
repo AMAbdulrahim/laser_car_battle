@@ -28,7 +28,7 @@ class GameViewModel extends ChangeNotifier {
   String? _winner;            // Stores winner name, null if game ongoing
 
   // Callback for game end events
-  GameOverCallback? _onGameOver;  // Allows external response to game completion
+  VoidCallback? _onGameOver;  // Allows external response to game completion
 
   // Player identification
   String _player1Name = 'Player 1';  // Default names with meaningful values
@@ -59,9 +59,7 @@ class GameViewModel extends ChangeNotifier {
   int get elapsedSeconds => _elapsedSeconds;
 
   // Add setter for callback
-  set onGameOver(GameOverCallback callback) {
-    _onGameOver = callback;
-  }
+  set onGameOver(VoidCallback callback) => _onGameOver = callback;
 
   // Add setters for player names
   set player1Name(String name) {
@@ -89,9 +87,29 @@ class GameViewModel extends ChangeNotifier {
   /// Formats time display in MM:SS format
   /// Handles both countdown and count-up scenarios
   String get formattedTime {
-    int minutes = _elapsedSeconds ~/ 60;
-    int seconds = _elapsedSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    if (_gameMode == 'Time') {
+      // For Time mode: show remaining time
+      int remainingSeconds = (_gameValue! * 60) - _timeInSeconds;
+      int minutes = remainingSeconds ~/ 60;
+      int seconds = remainingSeconds % 60;
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    } else {
+      // For Points mode: show elapsed time
+      int minutes = _elapsedSeconds ~/ 60;
+      int seconds = _elapsedSeconds % 60;
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    }
+  }
+
+  /// Add getter for formatted time in Time mode
+  String get formattedGameTime {
+    if (_gameMode == 'Time') {
+      int remainingSeconds = (_gameValue! * 60) - _timeInSeconds;
+      int minutes = remainingSeconds ~/ 60;
+      int seconds = remainingSeconds % 60;
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    }
+    return formattedTime; // Use existing elapsed time formatter for Points mode
   }
 
   /// Initializes and starts the game session
@@ -106,33 +124,28 @@ class GameViewModel extends ChangeNotifier {
     // Start a new timer that ticks every second
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_gameMode == 'Time' && _gameValue != null) {
-        // Check if time is up before incrementing
-        if (_timeInSeconds >= _gameValue! * 60) {
-          _determineWinnerForTimeMode();
-          stopGame();
-          return;
-        }
-        
         _timeInSeconds++;
-        // Calculate remaining time after increment
+        
+        // Check remaining time
         int remainingTime = (_gameValue! * 60) - _timeInSeconds;
         
-        // Start flashing at 30 seconds remaining
-        if (remainingTime == 30) {
+        if (remainingTime <= 30 && !_isFlashing) {
           _startFlashing();
         }
-
-        // Start vibration at 10 seconds remaining
-        if (remainingTime == 10) {
+        if (remainingTime <= 10 && _vibrationTimer == null) {
           _startVibrating();
         }
         
-        notifyListeners();
+        if (remainingTime <= 0) {
+          _determineWinnerForTimeMode();
+          _endGame(); // Use new _endGame method
+          return;
+        }
       } else {
-        // Points mode: track elapsed time
+        // Points mode
         _elapsedSeconds++;
-        notifyListeners();
       }
+      notifyListeners();
     });
   }
 
@@ -167,18 +180,20 @@ class GameViewModel extends ChangeNotifier {
 
   /// Gracefully terminates game session
   /// Cleans up resources and triggers callbacks
-  void stopGame() {
+  Future<void> stopGame() async {
     _isGameActive = false;
+    
+    // Cancel all timers
     _timer?.cancel();
     _flashTimer?.cancel();
     _vibrationTimer?.cancel();
-    _isFlashing = false;
-    Vibration.cancel();
     
-    // Call callback when game is over and we have a winner
-    if (_winner != null && _onGameOver != null) {
-      _onGameOver!();
-    }
+    // Reset states
+    _isFlashing = false;
+    
+    // Make sure vibration is completely stopped
+    await Vibration.cancel();
+    
     notifyListeners();
   }
 
@@ -223,20 +238,43 @@ class GameViewModel extends ChangeNotifier {
     if (_gameMode == 'Points' && _targetPoints != null) {
       if (_player1Points >= _targetPoints!) {
         _winner = _player1Name;
-        stopGame();
+        _endGame();
       } else if (_player2Points >= _targetPoints!) {
         _winner = _player2Name;
-        stopGame();
+        _endGame();
       }
     } else if (_gameMode == 'Time' && _timeInSeconds >= _gameValue! * 60) {
       _determineWinnerForTimeMode();
-      stopGame();
+      _endGame();
     }
   }
 
   /// Determines winner in time mode
   /// Considers point totals and handles ties
   void _determineWinnerForTimeMode() {
+    if (_player1Points > _player2Points) {
+      _winner = _player1Name;
+    } else if (_player2Points > _player1Points) {
+      _winner = _player2Name;
+    } else {
+      _winner = 'Draw';
+    }
+  }
+
+  void _checkGameEnd() {
+    if (_gameMode == 'Time' && _timeInSeconds >= _gameValue! * 60) {
+      _determineWinnerForTimeMode();
+      _onGameOver?.call();  // Call callback instead of stopGame directly
+    } else if (_gameMode == 'Points' && 
+        (_player1Points >= _targetPoints! || _player2Points >= _targetPoints!)) {
+      _checkWinCondition();
+      _onGameOver?.call();  // Call callback instead of stopGame directly
+    }
+  }
+
+  /// Determines winner in points mode
+  /// Considers point totals and handles ties
+  void _determineWinnerForPointsMode() {
     if (_player1Points > _player2Points) {
       _winner = _player1Name;
     } else if (_player2Points > _player1Points) {
@@ -281,5 +319,22 @@ class GameViewModel extends ChangeNotifier {
     _vibrationTimer?.cancel();
     Vibration.cancel();
     super.dispose();
+  }
+
+  Future<void> _endGame() async {
+    // Stop all ongoing processes first
+    _timer?.cancel();
+    _flashTimer?.cancel();
+    _vibrationTimer?.cancel();
+    _isFlashing = false;
+    await Vibration.cancel();
+    _isGameActive = false;
+    
+    notifyListeners();
+    
+    // Only call game over callback after cleanup is complete
+    if (_winner != null && _onGameOver != null) {
+      _onGameOver!();
+    }
   }
 }
