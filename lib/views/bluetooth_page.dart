@@ -14,14 +14,11 @@ class BluetoothPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    final playerName = context.watch<PlayerViewModel>().playerName;
-    
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+        preferredSize: Size.fromHeight(kToolbarHeight+10),
         child: CustomAppBar(
-          titleText: "Bluetooth Connection",
+          titleText: "Connect",
         ),
       ),
       body: LayoutBuilder(
@@ -33,47 +30,53 @@ class BluetoothPage extends StatelessWidget {
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      height: AppSizes.paddingLarge * 4,
-                      width: double.infinity,
-                      decoration: BoxDecoration(),
-                      child: Text(
-                        "Hi, $playerName",
-                        style: const TextStyle(
-                          fontSize: AppSizes.fontMain,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 10.0,
-                              color: Colors.black45,
-                              offset: Offset(2.0, 2.0),
+                child: Consumer<PlayerViewModel>(
+                  builder: (context, playerViewModel, child) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          height: AppSizes.paddingLarge * 4,
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.paddingMedium,
+                          ),
+                          child: Text(
+                            "Hi, ${playerViewModel.playerName.isEmpty ? 'Player' : playerViewModel.playerName}",
+                            style: const TextStyle(
+                              fontSize: AppSizes.fontMain,
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 10.0,
+                                  color: Colors.black45,
+                                  offset: Offset(2.0, 2.0),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                    StatusCard(
-                      checkStatus: isConnectedPlayer,
-                      statusText: "Connect via Bluetooth", 
-                    ),
-                    SizedBox(height: AppSizes.paddingLarge),
-                    StatusCard(
-                      checkStatus: isConnectedOpponent,
-                      statusText: "Opponent", 
-                    ),
-                    SizedBox(height: AppSizes.paddingLarge * 1.5),
-                    if (isConnectedOpponent && true && isConnectedPlayer) ...[
-                      ActionButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/gameMode');
-                        },
-                        buttonText: "Game Mode", 
-                      ),
-                    ]
-                  ],
+                        StatusCard(
+                          checkStatus: isConnectedPlayer,
+                          statusText: "Connect via Bluetooth", 
+                        ),
+                        SizedBox(height: AppSizes.paddingLarge),
+                        StatusCard(
+                          checkStatus: isConnectedOpponent,
+                          statusText: "Opponent", 
+                        ),
+                        SizedBox(height: AppSizes.paddingLarge * 1.5),
+                        if (isConnectedOpponent && true && isConnectedPlayer) ...[
+                          ActionButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/gameMode');
+                            },
+                            buttonText: "Game Mode", 
+                          ),
+                        ]
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

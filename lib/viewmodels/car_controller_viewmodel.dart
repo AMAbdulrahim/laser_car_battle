@@ -1,6 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
+import 'package:vibration/vibration.dart';
 
 class CarControllerViewModel extends ChangeNotifier {
+  final GameViewModel gameViewModel;
+
+  CarControllerViewModel({required this.gameViewModel});
+
   // Joystick controls
   double _xAxis = 0.0;
   double _yAxis = 0.0;
@@ -29,9 +35,29 @@ class CarControllerViewModel extends ChangeNotifier {
     print('Brake State: $_isBraking');
   }
 
-  void fire() {
+  // Modify fire method to handle hits
+  void fire() async {
+    if (await Vibration.hasVibrator() ) {
+      Vibration.vibrate(duration: 100, amplitude: 255);
+    }
+
     // TODO: Send fire signal to Arduino
     print('Fire!');
+    gameViewModel.addPointToPlayer1(); // (!!!) Temporary: add point to player 1 
+
+    // TODO: When hit is detected from Arduino
+    // handleHit(playerNumber);
+  }
+
+  // Add method to handle hits
+  void handleHit(int playerHit) {
+    if (!gameViewModel.isGameActive) return;
+
+    if (playerHit == 1) {
+      gameViewModel.addPointToPlayer2();
+    } else if (playerHit == 2) {
+      gameViewModel.addPointToPlayer1();
+    }
   }
 
   // Method to get all control states

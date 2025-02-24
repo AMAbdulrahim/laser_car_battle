@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
+import 'package:vibration/vibration.dart';
 import 'dart:async';
 
 class FireButton extends StatefulWidget {
@@ -18,12 +19,16 @@ class FireButton extends StatefulWidget {
 
 class _FireButtonState extends State<FireButton> {
   bool _isEnabled = true;
-  // int _countdown = 3;
   Timer? _timer;
   final ValueNotifier<int> _countNotifier = ValueNotifier<int>(3);
 
-  void _handlePress() {
+  void _handlePress() async {
     if (_isEnabled) {
+      // Add vibration feedback
+      if (await Vibration.hasVibrator()) {
+        Vibration.vibrate(duration: 100, amplitude: 255);
+      }
+      
       widget.onPressed();
       _isEnabled = false;
       _countNotifier.value = 3;

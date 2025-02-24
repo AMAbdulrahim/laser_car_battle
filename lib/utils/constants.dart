@@ -27,4 +27,7 @@ class AppSizes {
   // Joystick sizes
   static const double joystickBaseSize = 200.0;
   static const double joystickKnobSize = 80.0;
+
+  // Icons
+  static const double iconSize = 60.0;
 }

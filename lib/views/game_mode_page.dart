@@ -137,7 +137,7 @@ class _GameModePageState extends State<GameModePage> {
                             
                           ),
                           value: timePickerValue!,
-                          minValue: 2,
+                          minValue: 1,
                           maxValue: 15,
                           step: 1,
                           haptics: true,
