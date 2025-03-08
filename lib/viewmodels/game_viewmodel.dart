@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:laser_car_battle/models/leaderboard_entry.dart';
+import 'package:laser_car_battle/viewmodels/leaderboard_viewmodel.dart';
 import 'dart:async';
 import 'package:vibration/vibration.dart';
 
@@ -8,6 +10,9 @@ typedef GameOverCallback = void Function();
 /// GameViewModel manages the game state and timer functionality
 /// Implements ChangeNotifier for reactive UI updates using the Observer pattern
 class GameViewModel extends ChangeNotifier {
+  // Add reference to LeaderboardViewModel
+  final LeaderboardViewModel? _leaderboardViewModel;
+
   // Private fields use underscore prefix for proper encapsulation
   // Nullable types (?) indicate optional values that may not be set immediately
   String? _gameMode;     // Tracks game mode with null safety
@@ -71,6 +76,9 @@ class GameViewModel extends ChangeNotifier {
     _player2Name = name;
     notifyListeners();
   }
+
+  // Update constructor
+  GameViewModel([this._leaderboardViewModel]);
 
   /// Dynamic timer color based on game state
   /// Returns red during final countdown, white otherwise
@@ -169,12 +177,12 @@ class GameViewModel extends ChangeNotifier {
         List<int> pattern = List.filled(20, 500); // 10 seconds * 2 (vibrate + pause)
         Vibration.vibrate(pattern: pattern);
         
-        print("Vibration started"); // Debug print
+        //print("Vibration started"); // Debug print
       } catch (e) {
         print("Vibration error: $e"); // Debug print
       }
     } else {
-      print("No vibrator available"); // Debug print
+      //print("No vibrator available"); // Debug print
     }
   }
 
@@ -261,28 +269,7 @@ class GameViewModel extends ChangeNotifier {
     }
   }
 
-  void _checkGameEnd() {
-    if (_gameMode == 'Time' && _timeInSeconds >= _gameValue! * 60) {
-      _determineWinnerForTimeMode();
-      _onGameOver?.call();  // Call callback instead of stopGame directly
-    } else if (_gameMode == 'Points' && 
-        (_player1Points >= _targetPoints! || _player2Points >= _targetPoints!)) {
-      _checkWinCondition();
-      _onGameOver?.call();  // Call callback instead of stopGame directly
-    }
-  }
 
-  /// Determines winner in points mode
-  /// Considers point totals and handles ties
-  void _determineWinnerForPointsMode() {
-    if (_player1Points > _player2Points) {
-      _winner = _player1Name;
-    } else if (_player2Points > _player1Points) {
-      _winner = _player2Name;
-    } else {
-      _winner = 'Draw';
-    }
-  }
 
   /// Complete game state reset
   /// Returns all values to initial state
@@ -329,6 +316,56 @@ class GameViewModel extends ChangeNotifier {
     _isFlashing = false;
     await Vibration.cancel();
     _isGameActive = false;
+    
+    // Try to save to leaderboard if available
+    if (_leaderboardViewModel?.isConnected == true && _winner != null) {
+      // Handle draw case specifically
+      if (_winner == 'Draw') {
+        // For draws, use player names instead of "Draw"
+        final entry = LeaderboardEntry(
+          winner: _player1Name!, // Use player 1's name instead of "Draw"
+          loser: _player2Name!,  // Use player 2's name
+          winnerScore: _player1Points, // Both scores should be equal in a draw
+          loserScore: _player2Points,
+          gameMode: _gameMode!,
+          gameValue: _gameMode == 'Time' 
+              ? '${_gameValue} minutes'
+              : '${_targetPoints} points',
+          timestamp: DateTime.now(),
+          duration: _gameMode == 'Points' 
+              ? _elapsedSeconds  // For Points mode: use elapsed time
+              : _gameValue! * 60, // For Time mode: use the set game duration
+        );
+        
+        try {
+          await _leaderboardViewModel?.addEntry(entry);
+        } catch (e) {
+          print('Failed to save to leaderboard: $e');
+        }
+      } else {
+        // Normal win/lose case (no change to your existing code)
+        final entry = LeaderboardEntry(
+          winner: _winner!,
+          loser: _winner == _player1Name ? _player2Name! : _player1Name!,
+          winnerScore: _winner == _player1Name ? _player1Points : _player2Points,
+          loserScore: _winner == _player1Name ? _player2Points : _player1Points,
+          gameMode: _gameMode!,
+          gameValue: _gameMode == 'Time' 
+              ? '${_gameValue} minutes'
+              : '${_targetPoints} points',
+          timestamp: DateTime.now(),
+          duration: _gameMode == 'Points' 
+              ? _elapsedSeconds  // For Points mode: use elapsed time
+              : _gameValue! * 60, // For Time mode: use the set game duration
+        );
+        
+        try {
+          await _leaderboardViewModel?.addEntry(entry);
+        } catch (e) {
+          print('Failed to save to leaderboard: $e');
+        }
+      }
+    }
     
     notifyListeners();
     

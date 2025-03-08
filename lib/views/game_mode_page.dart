@@ -178,7 +178,7 @@ class _GameModePageState extends State<GameModePage> {
                   } else if (selectedMode == 'Time') {
                     context.read<GameViewModel>().setGameSettings('Time', timePickerValue!);
                   }
-                  Navigator.pushNamed(context, 'controller');
+                  Navigator.pushNamed(context, '/controller');
                 }, 
                 buttonText: "Start Game"
               ),
