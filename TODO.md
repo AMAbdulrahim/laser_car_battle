@@ -10,7 +10,7 @@
 - [ ] Add sound effects
 - [ ] Add background music
 - [ ] Add animations for hits
-- [ ] Add 
+
 
 ## UI Improvements
 - [x] Add score board
@@ -36,7 +36,6 @@
 - [ ] Add achievements
 
 ## Performance Optimizations
-- [ ] Optimize game loop
 - [ ] Reduce unnecessary rebuilds
 - [ ] Improve asset loading
 - [ ] Optimize memory usage
