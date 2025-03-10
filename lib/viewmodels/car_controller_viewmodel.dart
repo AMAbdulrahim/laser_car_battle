@@ -96,6 +96,9 @@ class CarControllerViewModel extends ChangeNotifier {
     // Debug output
     print('DEBUG - Fire Button Pressed! Count: $_fireCount');
     
+    // Temporarily add points for testing
+    gameViewModel.addPointToPlayer1(); // !!! Remove this line after hit detection is implemented
+
     // Only send to Arduino if connected
     final currentCarId = carId;
     if (currentCarId != null) {
