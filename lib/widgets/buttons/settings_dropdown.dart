@@ -9,10 +9,12 @@ import 'package:vibration/vibration.dart';
 
 class SettingsDropdown extends StatelessWidget {
   final VoidCallback onToggleControls;
+  final VoidCallback onToggleDebug;
 
   const SettingsDropdown({
     super.key,
     required this.onToggleControls,
+    required this.onToggleDebug,
   });
 
   @override
@@ -48,6 +50,21 @@ class SettingsDropdown extends StatelessWidget {
           ),
         ),
         DropdownMenuItem(
+          value: 'debug',
+          child: Row(
+            children: [
+              const Icon(Icons.bug_report, color: CustomColors.textPrimary),
+              const SizedBox(width: 10),
+              Text(
+                'Toggle Debug',
+                style: TextStyle(
+                  color: CustomColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        DropdownMenuItem(
           value: 'exit',
           child: Row(
             children: [
@@ -67,6 +84,9 @@ class SettingsDropdown extends StatelessWidget {
         switch (value) {
           case 'toggle':
             onToggleControls();
+            break;
+          case 'debug':
+            onToggleDebug();
             break;
           case 'exit':
             _handleExit(context);

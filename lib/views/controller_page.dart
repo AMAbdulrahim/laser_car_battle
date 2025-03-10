@@ -4,6 +4,7 @@ import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
 import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_joystick.dart';
+import 'package:laser_car_battle/widgets/debug_overlay.dart';
 import 'package:laser_car_battle/widgets/insights.dart';
 import 'package:laser_car_battle/widgets/score_board.dart';
 import 'package:provider/provider.dart';
@@ -20,6 +21,7 @@ class RemoteController extends StatefulWidget {
 
 class _RemoteControllerState extends State<RemoteController> {
   bool _controlsOnLeft = true;
+  bool _showDebugOverlay = true;  // Add this line
   late final GameViewModel _gameViewModel;
 
   @override
@@ -71,6 +73,11 @@ class _RemoteControllerState extends State<RemoteController> {
                   onToggleControls: () {
                     setState(() {
                       _controlsOnLeft = !_controlsOnLeft;
+                    });
+                  },
+                  onToggleDebug: () {
+                    setState(() {
+                      _showDebugOverlay = !_showDebugOverlay;
                     });
                   },
                 ),
@@ -133,18 +140,16 @@ class _RemoteControllerState extends State<RemoteController> {
               ),
               // Joystick Widget
               Positioned(
-                bottom: AppSizes.paddingLarge +10,
-                left: _controlsOnLeft ? null : AppSizes.paddingLarge +30,
-                right: _controlsOnLeft ? AppSizes.paddingLarge +30 : null,
+                bottom: AppSizes.paddingLarge + 10,
+                left: _controlsOnLeft ? null : AppSizes.paddingLarge + 30,
+                right: _controlsOnLeft ? AppSizes.paddingLarge + 30 : null,
                 child: CustomJoystick(
-                  listener: (details) {
-                    double sensitivityFactor = 0.75;
-                    double scaledX = details.x * sensitivityFactor;
-                    double scaledY = details.y * sensitivityFactor;
-                    controller.updateJoystickPosition(scaledX, scaledY);
-                  },
+                  listener: controller.updateJoystickPosition,
                 ),
               ),
+              // Debug overlay - now with visibility toggle
+              if (_showDebugOverlay)
+                DebugOverlay(controller: controller),
             ],
           ),
         );

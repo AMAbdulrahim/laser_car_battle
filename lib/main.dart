@@ -8,6 +8,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> main() async {
   // Remove runZonedGuarded for simplicity during debugging
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,22 +31,28 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
   
-  runApp(const MyApp());
+  runApp(MyApp(navigatorKey: navigatorKey));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final GlobalKey<NavigatorState> navigatorKey;
+
+  const MyApp({
+    super.key,
+    required this.navigatorKey,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: getProviders(),
+      providers: getProviders(navigatorKey),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         theme: CustomTheme.darkTheme,
         initialRoute: '/',  
         routes: routes,
+        navigatorKey: navigatorKey,
       ),
     );
   }
