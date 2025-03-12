@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
 import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
@@ -8,6 +9,7 @@ import 'package:laser_car_battle/widgets/arrow_control.dart';  // Add this impor
 import 'package:laser_car_battle/widgets/debug_overlay.dart';
 import 'package:laser_car_battle/widgets/insights.dart';
 import 'package:laser_car_battle/widgets/score_board.dart';
+import 'package:laser_car_battle/widgets/speed_slider.dart';
 import 'package:provider/provider.dart';
 import 'package:laser_car_battle/viewmodels/car_controller_viewmodel.dart';
 import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
@@ -24,7 +26,13 @@ class _RemoteControllerState extends State<RemoteController> {
   bool _controlsOnLeft = true;
   bool _showDebugOverlay = true;
   bool _useJoystick = true;  // Add this state variable
+  double _maxSpeed = 1.0; // Add max speed state
   late final GameViewModel _gameViewModel;
+
+  // Add this method to handle speed slider changes without changing CarControllerViewModel
+  void _handleSpeedChange(double value) {
+    setState(() => _maxSpeed = value);
+  }
 
   @override
   void initState() {
@@ -102,22 +110,33 @@ class _RemoteControllerState extends State<RemoteController> {
                 right: 0,
                 child: ScoreBoard(),
               ),
-              //  Brake & Fire Controls Widget
+              // Brake/Speed Controls and Fire Button
               Positioned(
                 bottom: AppSizes.paddingLarge + 10,
                 left: _controlsOnLeft ? AppSizes.paddingLarge + 10 : null,
                 right: _controlsOnLeft ? null : AppSizes.paddingLarge + 10,
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end, // Align at bottom
                   children: _controlsOnLeft 
                   ? [
-                      // Left side controls
-                      BrakeButton(
-                        onPressed: () => controller.setBrakeState(true),
-                        onReleased: () => controller.setBrakeState(false),
-                        width: 100,
-                        height: 150,
-                        isRightBrake: false,
-                      ),
+                      // Left side controls - brake if joystick, speed slider if arrows
+                      _useJoystick
+                        ? BrakeButton(
+                            onPressed: () => controller.setBrakeState(true),
+                            onReleased: () => controller.setBrakeState(false),
+                            width: 100,
+                            height: 150,
+                            isRightBrake: false,
+                          )
+                        : SpeedSlider(
+                            value: _maxSpeed,
+                            onChanged: (value) {
+                              _handleSpeedChange(value);  // Replace setMaxSpeed call
+                            },
+                            width: 80,
+                            height: 180, // Increased height
+                            isRightSide: false,
+                          ),
                       Padding(
                         padding: EdgeInsets.only(left: AppSizes.paddingLarge),
                         child: FireButton(
@@ -127,20 +146,30 @@ class _RemoteControllerState extends State<RemoteController> {
                       ),
                     ]
                   : [
-                      // Right side controls
+                      // Right side controls - fire + brake/slider
                       FireButton(
                         onPressed: () => controller.fire(),
                         size: 150,
                       ),
                       Padding(
                         padding: EdgeInsets.only(left: AppSizes.paddingLarge),
-                        child: BrakeButton(
-                          onPressed: () => controller.setBrakeState(true),
-                          onReleased: () => controller.setBrakeState(false),
-                          width: 100,
-                          height: 150,
-                          isRightBrake: true,
-                        ),
+                        child: _useJoystick
+                          ? BrakeButton(
+                              onPressed: () => controller.setBrakeState(true),
+                              onReleased: () => controller.setBrakeState(false),
+                              width: 100,
+                              height: 150,
+                              isRightBrake: true,
+                            )
+                          : SpeedSlider(
+                              value: _maxSpeed,
+                              onChanged: (value) {
+                                _handleSpeedChange(value);  // Replace setMaxSpeed call
+                              },
+                              width: 80,
+                              height: 180, // Increased height
+                              isRightSide: true,
+                            ),
                       ),
                     ],
                 ),
@@ -156,6 +185,8 @@ class _RemoteControllerState extends State<RemoteController> {
                     )
                   : ArrowControls(
                       onControlUpdate: controller.updateJoystickPosition,
+                      onBrakePressed: controller.setBrakeState,
+                      maxSpeed: _maxSpeed, // Add this parameter to pass maxSpeed
                     ),
               ),
               // Debug overlay - now with visibility toggle

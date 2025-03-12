@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
+import 'package:laser_car_battle/utils/constants.dart';
 
 class ArrowControls extends StatefulWidget {
   final Function(double x, double y) onControlUpdate;
+  final Function(bool) onBrakePressed;
+  final double maxSpeed; // Add this parameter
 
-  const ArrowControls({required this.onControlUpdate, Key? key}) : super(key: key);
+  const ArrowControls({
+    required this.onControlUpdate,
+    required this.onBrakePressed,
+    this.maxSpeed = 1.0, // Default to 1.0 if not provided
+    Key? key,
+  }) : super(key: key);
 
   @override
   _ArrowControlsState createState() => _ArrowControlsState();
@@ -15,16 +23,17 @@ class _ArrowControlsState extends State<ArrowControls> with SingleTickerProvider
   // X (direction) and Y (speed) values
   double x = 0.0;
   double y = 0.0;
-  double speedMultiplier = 0.0;  // New: tracks acceleration progress
+  double speedMultiplier = 0.0;
   
-  // Constants for control feel
-  final double maxValue = 1.0;    // Maximum value for both x and y [-1.0, 1.0]
-  final double minSpeed = 0.15;    // Minimum initial speed
-  final double acceleration = 0.02;    // Rate of acceleration (takes ~50 frames to max)
-  final double deceleration = 0.04;    // Rate of deceleration (faster than accel)
-  final double threshold = 0.02;       // Zero-snap threshold
-  final double sensitivity = 0.02;     // Movement granularity
-  final double epsilon = 0.001;  // Smallest significant difference
+  bool isBrakePressed = false;
+  
+  // Other constants for control feel
+  final double minSpeed = 0.15;
+  final double acceleration = 0.02;
+  final double deceleration = 0.04;
+  final double threshold = 0.02;
+  final double sensitivity = 0.02;
+  final double epsilon = 0.001;
   
   Map<String, bool> keyPressed = {
     "up": false,
@@ -99,17 +108,17 @@ class _ArrowControlsState extends State<ArrowControls> with SingleTickerProvider
       speedMultiplier = (speedMultiplier - deceleration).clamp(0.0, 1.0);
     }
 
-    // Determine targets based on pressed keys
+    // Use widget.maxSpeed instead of constant maxValue or _maxValue
     if (keyPressed["left"] == true) {
-      targetX = -maxValue;
-      targetY = maxValue;
+      targetX = -1.0; // X value is always full
+      targetY = widget.maxSpeed; // Y is scaled by maxSpeed
     } else if (keyPressed["right"] == true) {
-      targetX = maxValue;
-      targetY = maxValue;
+      targetX = 1.0; // X value is always full
+      targetY = widget.maxSpeed; // Y is scaled by maxSpeed
     } else if (keyPressed["up"] == true) {
-      targetY = maxValue;
+      targetY = widget.maxSpeed; // Y is scaled by maxSpeed
     } else if (keyPressed["down"] == true) {
-      targetY = -maxValue;
+      targetY = -widget.maxSpeed; // Y is scaled by maxSpeed
     }
 
     // Apply speed multiplier to movement with minimum speed
@@ -129,7 +138,7 @@ class _ArrowControlsState extends State<ArrowControls> with SingleTickerProvider
       }
     }
 
-    // Apply speed multiplier to Y movement
+    // Similar update for Y movement
     if (targetY != 0) {
       double step = (targetY - y).sign * sensitivity * speedMultiplier;
       if ((targetY - y).abs() < sensitivity) {
@@ -138,7 +147,6 @@ class _ArrowControlsState extends State<ArrowControls> with SingleTickerProvider
         y += step;
       }
     } else {
-      // Decelerate in steps
       if (y.abs() < sensitivity) {
         y = 0;
       } else {
@@ -146,9 +154,9 @@ class _ArrowControlsState extends State<ArrowControls> with SingleTickerProvider
       }
     }
 
-    // Clamp values
-    x = x.clamp(-maxValue, maxValue);
-    y = y.clamp(-maxValue, maxValue);
+    // Only clamp Y value using maxSpeed
+    x = x.clamp(-1.0, 1.0);
+    y = y.clamp(-widget.maxSpeed, widget.maxSpeed);
 
     // Round values to prevent floating point errors
     x = double.parse(x.toStringAsFixed(3));
@@ -198,6 +206,8 @@ class _ArrowControlsState extends State<ArrowControls> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    const double spacing = 20.0;
+    
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -212,7 +222,12 @@ class _ArrowControlsState extends State<ArrowControls> with SingleTickerProvider
           mainAxisSize: MainAxisSize.min,
           children: [
             _arrowButton("left", Icons.arrow_back),
-            const SizedBox(width: 75),
+            //const SizedBox(width: spacing),
+            Padding(
+              padding: const EdgeInsets.all(AppSizes.paddingSmall),
+              child: _brakeButton(),
+            ), // Keep brake button in middle
+            //const SizedBox(width: spacing),
             _arrowButton("right", Icons.arrow_forward),
           ],
         ),
@@ -238,11 +253,57 @@ class _ArrowControlsState extends State<ArrowControls> with SingleTickerProvider
           shape: BoxShape.circle,
           color: keyPressed[key] == true ? CustomColors.joystickBase : CustomColors.joystickKnob,
         ),
-    child: Icon(
+        child: Icon(
           icon, 
           color: keyPressed[key] == true ? CustomColors.joystickKnob : CustomColors.joystickBase,
           size: 36, // Add explicit icon size
-        ),      ),
+        ),
+      ),
     );
   }
+
+  // Update brake button to be square with text
+  Widget _brakeButton() {
+    // Return empty space if no brake handler
+    if (widget.onBrakePressed == null) {
+      return SizedBox(width: 75, height: 75);
+    }
+
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() => isBrakePressed = true);
+        widget.onBrakePressed(true);
+      },
+      onTapUp: (_) {
+        setState(() => isBrakePressed = false);
+        widget.onBrakePressed(false);
+      },
+      onTapCancel: () {
+        setState(() => isBrakePressed = false);
+        widget.onBrakePressed(false);
+      },
+      child: Container(
+        width: 70,
+        height: 70,
+        decoration: BoxDecoration(
+          shape: BoxShape.rectangle,  // Changed to square
+          borderRadius: BorderRadius.circular(10), // Slightly rounded corners
+          color: !isBrakePressed ? CustomColors.joystickBase : CustomColors.joystickKnob,
+        ),
+        child: Center(
+          child: Text(
+            "BRAKE",
+            style: TextStyle(
+              color: !isBrakePressed ? CustomColors.joystickKnob : CustomColors.joystickBase,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  
+
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/utils/constants.dart';
+import 'dart:math' as math;  // Add this import
 
 class CustomJoystick extends StatefulWidget {
   final Function(double x, double y) listener;
@@ -54,19 +55,37 @@ class _CustomJoystickState extends State<CustomJoystick> {
       mode: JoystickMode.all,
       period: const Duration(milliseconds: 100),
       listener: (details) {
-        // Scale and round the values
-        final scaledX = (details.x * widget.sensitivityFactor)
-            .clamp(-1.0, 1.0);
-        final scaledY = (details.y * widget.sensitivityFactor)
-            .clamp(-1.0, 1.0);
+        // Calculate magnitude of the joystick position
+        final magnitude = math.sqrt(details.x * details.x + details.y * details.y);
+        
+        // Normalize values if magnitude is not zero
+        double normalizedX = details.x;
+        double normalizedY = details.y;
+        if (magnitude > 0) {
+          normalizedX = details.x / magnitude;
+          normalizedY = details.y / magnitude;
+        }
+
+        // Scale values while preserving direction
+        final scaledX = (normalizedX * widget.sensitivityFactor)
+            .clamp(-1.0, 1.0)
+            * (1.0 / widget.sensitivityFactor);
+            
+        // Invert Y axis and scale
+        final scaledY = (-normalizedY * widget.sensitivityFactor)
+            .clamp(-1.0, 1.0)
+            * (1.0 / widget.sensitivityFactor);
+        
+        // Round to 3 decimal places
+        final roundedX = double.parse(scaledX.toStringAsFixed(3));
+        final roundedY = double.parse(scaledY.toStringAsFixed(3));
         
         // Debug print
-        print('Joystick Update:');
-        print('  Raw - X: ${details.x}, Y: ${details.y}');
-        print('  Scaled - X: ${scaledX.toStringAsFixed(2)}, Y: ${scaledY.toStringAsFixed(2)}');
+        // print('Joystick Update:');
+        // print('  Raw - X: ${details.x}, Y: ${-details.y}');
+        // print('  Normalized - X: $roundedX, Y: $roundedY');
         
-        // Pass scaled values directly to listener
-        widget.listener(scaledX, scaledY);
+        widget.listener(roundedX, roundedY);
       },
     );
   }
