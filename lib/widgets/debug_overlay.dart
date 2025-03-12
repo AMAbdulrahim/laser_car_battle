@@ -11,7 +11,8 @@ class DebugOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Align(
+      alignment: Alignment(0, 0.3), // Values range from -1 to 1, positive y moves down
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -45,7 +46,7 @@ class DebugOverlay extends StatelessWidget {
               style: TextStyle(color: Colors.white70),
             ),
             Text(
-              'Last Action: ${controller.lastAction}',
+              'Last Action: \n${controller.lastAction}',
               style: TextStyle(color: Colors.white70),
             ),
           ],

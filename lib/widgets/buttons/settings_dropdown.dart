@@ -10,11 +10,13 @@ import 'package:vibration/vibration.dart';
 class SettingsDropdown extends StatelessWidget {
   final VoidCallback onToggleControls;
   final VoidCallback onToggleDebug;
+  final VoidCallback onToggleControlType; // New callback
 
   const SettingsDropdown({
     super.key,
     required this.onToggleControls,
     required this.onToggleDebug,
+    required this.onToggleControlType, // Add this parameter
   });
 
   @override
@@ -37,11 +39,28 @@ class SettingsDropdown extends StatelessWidget {
         DropdownMenuItem(
           value: 'toggle',
           child: Row(
+            mainAxisSize: MainAxisSize.min,  // Add this line
             children: [
               const Icon(Icons.swap_horiz, color: CustomColors.textPrimary),
               const SizedBox(width: 10),
               Text(
                 'Switch Controls',
+                style: TextStyle(
+                  color: CustomColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Add new menu item for control type toggle
+        DropdownMenuItem(
+          value: 'controlType',
+          child: Row(
+            children: [
+              const Icon(Icons.gamepad, color: CustomColors.textPrimary),
+              const SizedBox(width: 10),
+              Text(
+                'Toggle Control Type',
                 style: TextStyle(
                   color: CustomColors.textPrimary,
                 ),
@@ -88,13 +107,16 @@ class SettingsDropdown extends StatelessWidget {
           case 'debug':
             onToggleDebug();
             break;
+          case 'controlType':
+            onToggleControlType(); // Handle the new value
+            break;
           case 'exit':
             _handleExit(context);
             break;
         }
       },
       dropdownStyleData: DropdownStyleData(
-        width: 180,
+        width: 208,
         offset: const Offset(0, 0),
         padding: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(

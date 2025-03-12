@@ -4,6 +4,7 @@ import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
 import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_joystick.dart';
+import 'package:laser_car_battle/widgets/arrow_control.dart';  // Add this import
 import 'package:laser_car_battle/widgets/debug_overlay.dart';
 import 'package:laser_car_battle/widgets/insights.dart';
 import 'package:laser_car_battle/widgets/score_board.dart';
@@ -21,7 +22,8 @@ class RemoteController extends StatefulWidget {
 
 class _RemoteControllerState extends State<RemoteController> {
   bool _controlsOnLeft = true;
-  bool _showDebugOverlay = true;  // Add this line
+  bool _showDebugOverlay = true;
+  bool _useJoystick = true;  // Add this state variable
   late final GameViewModel _gameViewModel;
 
   @override
@@ -78,6 +80,11 @@ class _RemoteControllerState extends State<RemoteController> {
                   onToggleDebug: () {
                     setState(() {
                       _showDebugOverlay = !_showDebugOverlay;
+                    });
+                  },
+                  onToggleControlType: () {
+                    setState(() {
+                      _useJoystick = !_useJoystick;
                     });
                   },
                 ),
@@ -138,14 +145,18 @@ class _RemoteControllerState extends State<RemoteController> {
                     ],
                 ),
               ),
-              // Joystick Widget
+              // Joystick or Arrow Controls Widget
               Positioned(
                 bottom: AppSizes.paddingLarge + 10,
                 left: _controlsOnLeft ? null : AppSizes.paddingLarge + 30,
                 right: _controlsOnLeft ? AppSizes.paddingLarge + 30 : null,
-                child: CustomJoystick(
-                  listener: controller.updateJoystickPosition,
-                ),
+                child: _useJoystick 
+                  ? CustomJoystick(
+                      listener: controller.updateJoystickPosition,
+                    )
+                  : ArrowControls(
+                      onControlUpdate: controller.updateJoystickPosition,
+                    ),
               ),
               // Debug overlay - now with visibility toggle
               if (_showDebugOverlay)

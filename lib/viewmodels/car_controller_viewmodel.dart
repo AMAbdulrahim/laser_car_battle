@@ -86,7 +86,7 @@ class CarControllerViewModel extends ChangeNotifier {
     // if (!isCarConnected) return;
     
     _fireCount++;
-    _lastAction = 'Fire! (${_fireCount})';
+    _lastAction = 'Fire! ($_fireCount)';
     notifyListeners();
     
     if (await Vibration.hasVibrator()) {
