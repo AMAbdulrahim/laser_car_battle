@@ -1,7 +1,10 @@
 # Laser Car Battle - TODO List
 
 ## Bugs to Fix
-- [] Render box when changing from portrait to landscape
+- [ ] Render box when changing from portrait to landscape
+- [ ] Fixing Small Value Detection in Arrow Controls
+- [ ] Fixing Control Behavior and Debug Spam
+
 
 ## Features to Add
 - [x] Share game results as image
@@ -10,6 +13,17 @@
 - [ ] Add sound effects
 - [ ] Add background music
 - [ ] Add animations for hits
+- [ ] Add xyz buttons for advanced gaming 
+- [ ] Add visual for speed and direction
+  - it will be half circle normalizing the x value that is [-1,1] but to be in [0,1] and add indication of forward and backward and im not sure about the direction indicator yet.
+- [ ] Add accuracy rate at the end
+  - as we already counts the number of fire and hits so it will be [(#hit/#fire)*100] then save it
+
+
+## General improvements
+- [ ] Github pages if achievable
+- [ ] Arabic language 
+- [ ] Add README.md
 
 ## UI Improvements
 - [x] Add score board
@@ -18,11 +32,12 @@
 - [ ] Add loading indicators
 - [ ] Improve button feedback
 - [ ] Add visual effects for hits
-- [ ] Add joystick sensitivity adjustment slider
-  - [ ] Add sensitivity control to settings dropdown
-  - [ ] Save sensitivity preferences
-  - [ ] Add visual feedback for sensitivity changes
-  - [ ] Implement per-player sensitivity settings
+- [ ] Improve the game over page 
+- [ ] Create and integrate a Logo
+- [ ] Add catching phrases in the pages
+- [ ] More appealing view of the leaderboard
+- [ ] Add sensitivity adjustment slider
+
 
 ## Code Refactoring
 - [x] Extract settings dropdown to separate widget
@@ -31,6 +46,8 @@
 - [ ] Implement proper logging
 - [ ] Add documentation
 - [ ] Add unit tests
+- [ ] Concise sizings add to the AppSizes class
+- [ ] Concise named colors in Colors class
 
 ## Future Enhancements
 - [ ] Add multiplayer over network
@@ -44,10 +61,7 @@
 - [ ] Improve asset loading
 - [ ] Optimize memory usage
 
-## Documentation
-- [ ] Add README.md
 
-# Bluetooth Implementation TODOs
 
 ## Core Bluetooth Features
 - [ ] Implement BLE service discovery
@@ -58,7 +72,7 @@
 - [ ] Add auto-reconnect functionality
 - [ ] Implement BLE status monitoring
 
-## Communication Layer
+### Communication Layer
 - [ ] Implement command/response protocol
 - [ ] Add command callback registration system
 - [ ] Create message serialization/deserialization
@@ -67,7 +81,7 @@
 - [ ] Add timeout handling for commands
 - [ ] Create bidirectional communication channel
 
-## Game-Specific Features
+### Game-Specific Features
 - [ ] Implement player discovery protocol
 - [ ] Add game state synchronization
 - [ ] Create hit detection and reporting
@@ -76,7 +90,7 @@
 - [ ] Create player name exchange protocol
 - [ ] Implement game start/end synchronization
 
-## Error Handling & Recovery
+### Error Handling & Recovery
 - [ ] Add connection loss recovery
 - [ ] Implement automatic reconnection
 - [ ] Create error reporting system
@@ -85,7 +99,7 @@
 - [ ] Create user-friendly error messages
 - [ ] Add diagnostic logging system
 
-## Testing & Validation
+### Testing & Validation
 - [ ] Create BLE connection tests
 - [ ] Add command protocol tests
 - [ ] Implement game state sync tests
@@ -94,7 +108,7 @@
 - [ ] Implement battery drain tests
 - [ ] Create interference handling tests
 
-## Future Enhancements
+### Future Enhancements
 - [ ] Add support for multiple simultaneous connections
 - [ ] Implement device bonding
 - [ ] Create secure communication channel
