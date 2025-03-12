@@ -4,7 +4,7 @@
 - [ ] Render box when changing from portrait to landscape
 - [ ] Fixing Small Value Detection in Arrow Controls
 - [ ] Fixing Control Behavior and Debug Spam
-
+- [ ] joystick value doesn't reach the maximum after modifying the arrows 
 
 ## Features to Add
 - [x] Share game results as image
