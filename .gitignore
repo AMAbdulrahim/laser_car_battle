@@ -22,6 +22,16 @@ bin/internal/engine.version
 .vscode/*
 .ccls-cache
 
+# This is dynamic in a monorepo
+bin/internal/engine.version
+
+# Visual Studio Code related
+.classpath
+.project
+.settings/
+.vscode/*
+.ccls-cache
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -128,3 +138,8 @@ app.*.symbols
 macos/Flutter/GeneratedPluginRegistrant.swift
 windows/flutter/generated_plugin_registrant.cc
 devtools_options.yaml
+
+# packages file containing multi-root paths
+.packages.generated
+
+
