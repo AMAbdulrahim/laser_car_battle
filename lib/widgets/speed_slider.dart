@@ -14,8 +14,8 @@ class SpeedSlider extends StatelessWidget {
     this.width = 80,            
     this.height = 180,
     this.isRightSide = true,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

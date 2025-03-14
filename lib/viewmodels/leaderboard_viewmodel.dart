@@ -1,3 +1,5 @@
+// ignore_for_file: unrelated_type_equality_checks
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/models/leaderboard_entry.dart';
@@ -88,7 +90,7 @@ class LeaderboardViewModel extends ChangeNotifier {
       await loadLeaderboard();
     } catch (e) {
       print('Error adding leaderboard entry: $e');
-      throw e;
+      rethrow;
     }
   }
 

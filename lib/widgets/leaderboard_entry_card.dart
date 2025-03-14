@@ -7,9 +7,9 @@ class LeaderboardEntryCard extends StatelessWidget {
   final LeaderboardEntry entry;
 
   const LeaderboardEntryCard({
-    Key? key,
+    super.key,
     required this.entry,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +68,7 @@ class LeaderboardEntryCard extends StatelessWidget {
               ),
             ],
           ),
-          trailing: Container(
+          trailing: SizedBox(
             width: 80,
             child: Column(
               mainAxisSize: MainAxisSize.min,

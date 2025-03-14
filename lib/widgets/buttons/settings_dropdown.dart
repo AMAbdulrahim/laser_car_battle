@@ -10,13 +10,15 @@ import 'package:vibration/vibration.dart';
 class SettingsDropdown extends StatelessWidget {
   final VoidCallback onToggleControls;
   final VoidCallback onToggleDebug;
-  final VoidCallback onToggleControlType; // New callback
+  final VoidCallback onToggleControlType;
+  final VoidCallback onToggleVisualMode; 
 
   const SettingsDropdown({
     super.key,
     required this.onToggleControls,
     required this.onToggleDebug,
-    required this.onToggleControlType, // Add this parameter
+    required this.onToggleControlType,
+        required this.onToggleVisualMode, 
   });
 
   @override
@@ -52,7 +54,6 @@ class SettingsDropdown extends StatelessWidget {
             ],
           ),
         ),
-        // Add new menu item for control type toggle
         DropdownMenuItem(
           value: 'controlType',
           child: Row(
@@ -61,6 +62,21 @@ class SettingsDropdown extends StatelessWidget {
               const SizedBox(width: 10),
               Text(
                 'Toggle Control Type',
+                style: TextStyle(
+                  color: CustomColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+         DropdownMenuItem(
+          value: 'visualMode',
+          child: Row(
+            children: [
+              const Icon(Icons.dashboard, color: CustomColors.textPrimary), // Updated icon
+              const SizedBox(width: 10),
+              Text(
+                'Toggle Dashboard',
                 style: TextStyle(
                   color: CustomColors.textPrimary,
                 ),
@@ -108,7 +124,10 @@ class SettingsDropdown extends StatelessWidget {
             onToggleDebug();
             break;
           case 'controlType':
-            onToggleControlType(); // Handle the new value
+            onToggleControlType();
+            break;
+          case 'visualMode':
+            onToggleVisualMode();
             break;
           case 'exit':
             _handleExit(context);

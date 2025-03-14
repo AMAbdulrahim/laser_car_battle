@@ -86,16 +86,16 @@ class GameCommands {
   }
 
   /// Helper method to send messages to car
-  Future<void> _sendMessage(String deviceId, Map<String, dynamic> message) async {
-    /* Commented during development
-    try {
-      final jsonMessage = jsonEncode(message);
-      await _bluetoothService.sendMessage(deviceId, jsonMessage);
-      print('Sent to $deviceId: $jsonMessage');
-    } catch (e) {
-      print('Error sending message: $e');
-    }
-    */
-    print('DEBUG - Would send to $deviceId: $message');
-  }
+  // Future<void> _sendMessage(String deviceId, Map<String, dynamic> message) async {
+  //   /* Commented during development
+  //   try {
+  //     final jsonMessage = jsonEncode(message);
+  //     await _bluetoothService.sendMessage(deviceId, jsonMessage);
+  //     print('Sent to $deviceId: $jsonMessage');
+  //   } catch (e) {
+  //     print('Error sending message: $e');
+  //   }
+  //   */
+  //   print('DEBUG - Would send to $deviceId: $message');
+  // }
 }

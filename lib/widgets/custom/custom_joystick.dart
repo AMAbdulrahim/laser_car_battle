@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/utils/constants.dart';
-import 'dart:math' as math;  // Add this import
 
 class CustomJoystick extends StatefulWidget {
   final Function(double x, double y) listener;
   final double sensitivityFactor;
 
   const CustomJoystick({
-    Key? key,
+    super.key,
     required this.listener,
-    this.sensitivityFactor = 0.75,
-  }) : super(key: key);
+    this.sensitivityFactor = 1,
+  });
 
   @override
   State<CustomJoystick> createState() => _CustomJoystickState();
@@ -55,39 +54,39 @@ class _CustomJoystickState extends State<CustomJoystick> {
       mode: JoystickMode.all,
       period: const Duration(milliseconds: 100),
       listener: (details) {
-        // Calculate magnitude of the joystick position
-        final magnitude = math.sqrt(details.x * details.x + details.y * details.y);
+        // Direct mapping of joystick position to control values
+        // X: controls steering (-1.0 to 1.0)
+        // Y: controls speed (-1.0 to 1.0), inverted so up is positive
         
-        // Normalize values if magnitude is not zero
-        double normalizedX = details.x;
-        double normalizedY = details.y;
-        if (magnitude > 0) {
-          normalizedX = details.x / magnitude;
-          normalizedY = details.y / magnitude;
-        }
-
-        // Scale values while preserving direction
-        final scaledX = (normalizedX * widget.sensitivityFactor)
-            .clamp(-1.0, 1.0)
-            * (1.0 / widget.sensitivityFactor);
-            
-        // Invert Y axis and scale
-        final scaledY = (-normalizedY * widget.sensitivityFactor)
-            .clamp(-1.0, 1.0)
-            * (1.0 / widget.sensitivityFactor);
+        // Apply sensitivity curve to make small adjustments easier
+        double steeringValue = details.x * widget.sensitivityFactor;
+        // Invert Y so pushing up means forward
+        double speedValue = -details.y * widget.sensitivityFactor;
         
-        // Round to 3 decimal places
-        final roundedX = double.parse(scaledX.toStringAsFixed(3));
-        final roundedY = double.parse(scaledY.toStringAsFixed(3));
+        // Optional: Apply non-linear response for more precise control around center
+        // This gives finer control for small movements
+        steeringValue = applyControlCurve(steeringValue);
+        speedValue = applyControlCurve(speedValue);
         
-        // Debug print
-        // print('Joystick Update:');
-        // print('  Raw - X: ${details.x}, Y: ${-details.y}');
-        // print('  Normalized - X: $roundedX, Y: $roundedY');
+        // Clamp values between -1.0 and 1.0
+        steeringValue = steeringValue.clamp(-1.0, 1.0);
+        speedValue = speedValue.clamp(-1.0, 1.0);
         
+        // Round to 3 decimal places for cleaner values
+        final roundedX = double.parse(steeringValue.toStringAsFixed(3));
+        final roundedY = double.parse(speedValue.toStringAsFixed(3));
+        
+        // Send the values to the listener
         widget.listener(roundedX, roundedY);
       },
     );
+  }
+
+  // Helper method for applying a control curve
+  double applyControlCurve(double input) {
+    // Apply a cubic curve for more precision in the middle
+    // This gives more fine-grained control for small movements
+    return input * input * input;
   }
 
   @override

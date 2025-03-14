@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
+import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/viewmodels/leaderboard_viewmodel.dart';
 import 'package:laser_car_battle/widgets/custom/custom_app_bar.dart';
 import 'package:laser_car_battle/widgets/leaderboard_filter_panel.dart';
@@ -10,10 +11,10 @@ class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
 
   @override
-  _LeaderboardPageState createState() => _LeaderboardPageState();
+  LeaderboardPageState createState() => LeaderboardPageState();
 }
 
-class _LeaderboardPageState extends State<LeaderboardPage> {
+class LeaderboardPageState extends State<LeaderboardPage> {
   String _currentSortOption = 'Most Recent';
   String _currentGameModeFilter = 'All';
   bool _showFilterPanel = false;
@@ -41,12 +42,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.wifi_off, size: 64, color: CustomColors.textPrimary),
+                  Icon(Icons.wifi_off, size: AppSizes.iconSize, color: CustomColors.textPrimary),
                   SizedBox(height: 16),
                   Text(
                     'No Internet Connection',
                     style: TextStyle(
-                      color: CustomColors.textPrimary,
                       fontSize: 20,
                     ),
                   ),
@@ -63,7 +63,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             return Center(
               child: Text(
                 'Failed to load leaderboard',
-                style: TextStyle(color: CustomColors.textPrimary),
               ),
             );
           }

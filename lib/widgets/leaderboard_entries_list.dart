@@ -6,9 +6,9 @@ class LeaderboardEntriesList extends StatelessWidget {
   final List<LeaderboardEntry> entries;
 
   const LeaderboardEntriesList({
-    Key? key,
+    super.key,
     required this.entries,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

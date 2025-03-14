@@ -11,20 +11,20 @@ class LeaderboardFilterPanel extends StatefulWidget {
   final VoidCallback onResetFilters;
 
   const LeaderboardFilterPanel({
-    Key? key,
+    super.key,
     required this.viewModel,
     required this.currentSortOption,
     required this.currentGameModeFilter,
     required this.onSortChanged,
     required this.onGameModeChanged,
     required this.onResetFilters,
-  }) : super(key: key);
+  });
 
   @override
-  _LeaderboardFilterPanelState createState() => _LeaderboardFilterPanelState();
+  LeaderboardFilterPanelState createState() => LeaderboardFilterPanelState();
 }
 
-class _LeaderboardFilterPanelState extends State<LeaderboardFilterPanel> {
+class LeaderboardFilterPanelState extends State<LeaderboardFilterPanel> {
   @override
   Widget build(BuildContext context) {
     return Container(
