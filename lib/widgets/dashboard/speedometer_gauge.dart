@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'dart:math' as math;
 
+/// A widget that displays the car's speed using a semi-circular gauge.
+/// 
+/// The gauge shows the current speed as a percentage of the maximum speed,
+/// with color changes based on the speed value.
 class SpeedometerGauge extends StatelessWidget {
   final double speed; // Speed value between -1.0 and 1.0
   final double maxSpeed; // Current max speed setting (0.1 to 1.0)
@@ -16,8 +20,6 @@ class SpeedometerGauge extends StatelessWidget {
   Widget build(BuildContext context) {
     // Normalize speed for display (absolute value for gauge, sign for direction)
     final double absSpeed = speed.abs();
-    
-    
     
     // Calculate color based on speed
     Color gaugeColor = CustomColors.joystickBase;
@@ -52,36 +54,12 @@ class SpeedometerGauge extends StatelessWidget {
             ),
           ),
         ),
-        
-        // const SizedBox(width: 10),
-  
-        // Direction indicator and speed percentage
-        // Column(
-        //   mainAxisAlignment: MainAxisAlignment.end, // Center vertically
-        //   crossAxisAlignment: CrossAxisAlignment.center,
-        //   children: [
-        //     // Direction arrow
-        //     Icon(
-        //       isForward ? Icons.arrow_upward : Icons.arrow_downward,
-        //       color: isForward ? Colors.green : Colors.red,
-        //       size: 30,
-        //     ),
-            
-        //     // Speed percentage text
-        //     Text(
-        //       '$speedPercent%',
-        //       style: TextStyle(
-        //         fontSize: 16,
-        //         fontWeight: FontWeight.bold,
-        //       ),
-        //     ),
-        //   ],
-        // ),
       ],
     );
   }
 }
 
+/// Custom painter for the speedometer gauge.
 class SpeedometerPainter extends CustomPainter {
   final double speed;
   final double maxSpeed;

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 
-import 'package:laser_car_battle/widgets/speedometer_gauge.dart';
-import 'package:laser_car_battle/widgets/steering_indicator.dart';
+import 'package:laser_car_battle/widgets/dashboard/speedometer_gauge.dart';
+import 'package:laser_car_battle/widgets/dashboard/steering_indicator.dart';
 
 class CarDashboard extends StatelessWidget {       
   final double speed;      // Speed value between -1.0 and 1.0

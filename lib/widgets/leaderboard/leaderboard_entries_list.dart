@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/models/leaderboard_entry.dart';
-import 'package:laser_car_battle/widgets/leaderboard_entry_card.dart';
+import 'package:laser_car_battle/widgets/leaderboard/leaderboard_entry_card.dart';
 
 class LeaderboardEntriesList extends StatelessWidget {
   final List<LeaderboardEntry> entries;

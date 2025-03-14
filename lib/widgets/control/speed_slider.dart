@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 
+/// A vertical slider widget for controlling the car's speed.
+/// 
+/// The slider displays the current speed percentage and allows the user to
+/// adjust the speed within a specified range.
 class SpeedSlider extends StatelessWidget {
   final double value;
   final ValueChanged<double> onChanged;
@@ -34,7 +38,6 @@ class SpeedSlider extends StatelessWidget {
           Text(
             "${(value * 100).toInt()}%",
             style: TextStyle(
-              //color: CustomColors.joystickBase,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
@@ -69,7 +72,6 @@ class SpeedSlider extends StatelessWidget {
           Text(
             "SPEED",
             style: TextStyle(
-              //color: CustomColors.joystickBase,
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
@@ -80,7 +82,7 @@ class SpeedSlider extends StatelessWidget {
   }
 }
 
-// Custom track shape to maximize slider length
+/// Custom track shape to maximize slider length.
 class CustomTrackShape extends RoundedRectSliderTrackShape {
   @override
   Rect getPreferredRect({

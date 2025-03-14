@@ -3,8 +3,8 @@ import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/viewmodels/leaderboard_viewmodel.dart';
 import 'package:laser_car_battle/widgets/custom/custom_app_bar.dart';
-import 'package:laser_car_battle/widgets/leaderboard_filter_panel.dart';
-import 'package:laser_car_battle/widgets/leaderboard_entries_list.dart'; 
+import 'package:laser_car_battle/widgets/leaderboard/leaderboard_filter_panel.dart';
+import 'package:laser_car_battle/widgets/leaderboard/leaderboard_entries_list.dart'; 
 import 'package:provider/provider.dart';
 
 class LeaderboardPage extends StatefulWidget {

@@ -3,18 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
 import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
-import 'package:laser_car_battle/widgets/car_dashboard.dart';
-import 'package:laser_car_battle/widgets/custom/custom_joystick.dart';
-import 'package:laser_car_battle/widgets/arrow_control.dart';
-import 'package:laser_car_battle/widgets/debug_overlay.dart';
-import 'package:laser_car_battle/widgets/insights.dart';
-import 'package:laser_car_battle/widgets/score_board.dart';
-import 'package:laser_car_battle/widgets/speed_slider.dart';
+import 'package:laser_car_battle/widgets/dashboard/car_dashboard.dart';
+import 'package:laser_car_battle/widgets/control/custom_joystick.dart';
+import 'package:laser_car_battle/widgets/control/arrow_control.dart';
+import 'package:laser_car_battle/widgets/debug/debug_overlay.dart';
+import 'package:laser_car_battle/widgets/insights/insights.dart';
+import 'package:laser_car_battle/widgets/score/score_board.dart';
+import 'package:laser_car_battle/widgets/control/speed_slider.dart';
 import 'package:provider/provider.dart';
 import 'package:laser_car_battle/viewmodels/car_controller_viewmodel.dart';
 import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
 import 'package:laser_car_battle/widgets/buttons/settings_dropdown.dart';
-import 'package:laser_car_battle/widgets/car_direction_arrow.dart';
+import 'package:laser_car_battle/widgets/dashboard/car_direction_arrow.dart';
 
 class RemoteController extends StatefulWidget {
   const RemoteController({super.key});

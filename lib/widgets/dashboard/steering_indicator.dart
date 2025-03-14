@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+/// A widget that displays the steering angle of the car.
+/// 
+/// The indicator shows the steering direction (left or right) and the angle
+/// as a percentage.
 class SteeringIndicator extends StatelessWidget {
   final double angle; // The steering angle between -1.0 (left) and 1.0 (right)
   final double size; // Size of the widget
@@ -12,11 +16,9 @@ class SteeringIndicator extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -44,12 +46,12 @@ class SteeringIndicator extends StatelessWidget {
             ),
           ],
         ),
-       
       ],
     );
   }
 }
 
+/// Custom painter for the steering indicator gauge.
 class SteeringPainter extends CustomPainter {
   final double angle; // Between -1.0 (left) and 1.0 (right)
   

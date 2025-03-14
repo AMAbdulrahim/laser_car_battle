@@ -2,6 +2,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 
+/// A widget that displays the car's direction and speed.
+/// 
+/// The arrow indicates the direction (forward or backward) and the speed
+/// percentage. The steering angle is also displayed as a percentage.
 class CarDirectionArrow extends StatelessWidget {
   final double speed;      // Speed value between -1.0 and 1.0
   final double angle;      // Steering angle between -1.0 (left) and 1.0 (right)

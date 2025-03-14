@@ -3,7 +3,7 @@ import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/viewmodels/player_viewmodel.dart';
 import 'package:laser_car_battle/widgets/buttons/action_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_app_bar.dart';
-import 'package:laser_car_battle/widgets/status_card.dart';
+import 'package:laser_car_battle/widgets/insights/status_card.dart';
 import 'package:provider/provider.dart';
 
 class BluetoothPage extends StatelessWidget {
