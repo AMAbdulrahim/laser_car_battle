@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+// ignore: unused_import
+import 'package:laser_car_battle/models/bluetooth_device.dart';
+// ignore: unused_import
+import 'package:laser_car_battle/models/car_type.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/widgets/buttons/fire_button.dart';
 import 'package:laser_car_battle/widgets/buttons/brake_button.dart';
@@ -41,6 +45,22 @@ class _RemoteControllerState extends State<RemoteController> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _gameViewModel = Provider.of<GameViewModel>(context, listen: false);
+
+  	// Add mock cars for debugging
+    _gameViewModel.setCar1(BluetoothDevice(
+      id: 'mock-car1-id',
+      name: 'Car1',
+      carType: CarType.car1,
+    ));
+    
+    _gameViewModel.setCar2(BluetoothDevice(
+      id: 'mock-car2-id',
+      name: 'Car2',
+      carType: CarType.car2,
+    ));
+
+
+
 
       _gameViewModel.onGameOver = () {
         if (mounted) {
@@ -106,7 +126,13 @@ class _RemoteControllerState extends State<RemoteController> {
               Positioned(
                 top: AppSizes.paddingLarge,
                 right: AppSizes.paddingMedium,
-                child: Insights(),
+                child: Consumer<GameViewModel>(
+                  builder: (context, gameViewModel, _) {
+                    return Insights(
+                      gameCode: gameViewModel.gameCode,
+                    );
+                  },
+                ),
               ),
               Positioned(
                 top: AppSizes.paddingLarge,

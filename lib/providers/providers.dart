@@ -24,6 +24,7 @@ List<ChangeNotifierProvider> getProviders(GlobalKey<NavigatorState> navigatorKey
         bluetoothService,
         navigatorKey,
         Provider.of<LeaderboardViewModel>(context, listen: false),
+        supabaseClient, // Add the missing Supabase client parameter
       ),
     ),
     ChangeNotifierProvider<PlayerViewModel>(

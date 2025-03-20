@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/models/bluetooth_device.dart';
 import 'package:laser_car_battle/models/car_type.dart';
+import 'package:laser_car_battle/models/game_session.dart';
 import 'package:laser_car_battle/models/leaderboard_entry.dart';
 import 'package:laser_car_battle/services/bluetooth_service.dart';
 import 'package:laser_car_battle/services/game_commands.dart';
+import 'package:laser_car_battle/services/game_sync_service.dart';
 import 'package:laser_car_battle/viewmodels/car_controller_viewmodel.dart';
 import 'package:laser_car_battle/viewmodels/leaderboard_viewmodel.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import 'package:vibration/vibration.dart';
+import 'dart:math';
 
 /// Custom typedef for game over callback to improve code readability and type safety
 typedef GameOverCallback = void Function();
@@ -20,6 +24,7 @@ class GameViewModel extends ChangeNotifier {
   final BluetoothService _bluetoothService;
   final GameCommands _gameCommands;
   final GlobalKey<NavigatorState> navigatorKey;
+  late final GameSyncService _gameSyncService;
   
   // Connected cars
   BluetoothDevice? _car1;
@@ -53,6 +58,17 @@ class GameViewModel extends ChangeNotifier {
 
   // Add elapsed time tracking
   int _elapsedSeconds = 0;
+
+  // Add these near the top of the class with other fields
+  bool _isHost = false;
+  bool get isHost => _isHost;
+
+  // Add these fields to the GameViewModel class
+  String? _gameSessionId;
+
+  // Add these fields near the top of the class
+  String? _gameCode;
+  String get gameCode => _gameCode ?? '';
 
   // Public getters provide controlled access to private state
   // Maintaining encapsulation while allowing read access
@@ -89,11 +105,41 @@ class GameViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Add this method
+  void setIsHost(bool value) {
+    _isHost = value;
+    notifyListeners();
+  }
+
+  // Add this method to generate a game code
+  String _generateGameCode() {
+    const chars = '0123456789';
+    final random = Random();
+    return String.fromCharCodes(Iterable.generate(
+        4, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+  }
+
   // Update constructor
-  GameViewModel(this._bluetoothService, this.navigatorKey, [this._leaderboardViewModel]) 
-      : _gameCommands = GameCommands(_bluetoothService) {
-    // Listen for hit events
+  GameViewModel(
+    this._bluetoothService,
+    this.navigatorKey,
+    this._leaderboardViewModel,
+    SupabaseClient supabaseClient,
+  ) : _gameCommands = GameCommands(_bluetoothService) {
+    // Initialize GameSyncService after constructor body
+    _gameSyncService = GameSyncService(
+      supabaseClient,
+      onGameUpdate: _handleGameUpdate,
+      onHit: _handleHitFromSupabase,
+    );
+
+    // Listen for hit events from Bluetooth
     _gameCommands.handleIncomingMessages(_handleHit);
+  }
+
+  // Handles hits coming from Supabase
+  void _handleHitFromSupabase(bool isPlayer1Hit) {
+    _handleHit({'target': isPlayer1Hit ? 'Car1' : 'Car2'});
   }
 
   // Getters for connected cars
@@ -153,58 +199,85 @@ class GameViewModel extends ChangeNotifier {
 
   /// Initializes and starts the game session
   /// Sets up timers, resets state, and manages game flow
-  void startGame() {
-    // First notify cars
-    if (_car1?.id != null) {
-      _gameCommands.sendGameStart(
-        _car1!.id,
+  Future<String> startGame() async {
+    if (isHost) {
+      _gameCode = _generateGameCode();
+      
+      // Create new game session with the game code
+      final session = await _gameSyncService.createGameSession(GameSession(
+        id: _gameCode!,  // Use game code as ID
+        player1Id: _car1!.id ,//?? 'mock-car1-id',
+        player2Id: _car2!.id ,//?? 'mock-car2-id',
+        player1Name: _player1Name,
+        player2Name: _player2Name,
         gameMode: _gameMode!,
         gameValue: _gameValue ?? _targetPoints!,
-        playerName: _player1Name,
-      );
-    }
-    if (_car2?.id != null) {
-      _gameCommands.sendGameStart(
-        _car2!.id,
-        gameMode: _gameMode!,
-        gameValue: _gameValue ?? _targetPoints!,
-        playerName: _player2Name,
-      );
-    }
-    
-    // Then start normal game logic
-    _isGameActive = true;
-    _timeInSeconds = 0;
-    _elapsedSeconds = 0;
-    _timer?.cancel();  // Cancel any existing timer
-    _flashTimer?.cancel();
-
-    // Start a new timer that ticks every second
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_gameMode == 'Time' && _gameValue != null) {
-        _timeInSeconds++;
-        
-        // Check remaining time
-        int remainingTime = (_gameValue! * 60) - _timeInSeconds;
-        
-        if (remainingTime <= 30 && !_isFlashing) {
-          _startFlashing();
-        }
-        if (remainingTime <= 10 && _vibrationTimer == null) {
-          _startVibrating();
-        }
-        
-        if (remainingTime <= 0) {
-          _determineWinnerForTimeMode();
-          _endGame(); // Use new _endGame method
-          return;
-        }
-      } else {
-        // Points mode
-        _elapsedSeconds++;
+        startTime: DateTime.now(),
+      ));
+      
+      _gameSessionId = session.id;
+      _gameSyncService.subscribeToGame(_gameSessionId!);
+      
+      // First notify cars
+      if (_car1?.id != null) {
+        _gameCommands.sendGameStart(
+          _car1!.id,
+          gameMode: _gameMode!,
+          gameValue: _gameValue ?? _targetPoints!,
+          playerName: _player1Name,
+        );
       }
-      notifyListeners();
-    });
+      if (_car2?.id != null) {
+        _gameCommands.sendGameStart(
+          _car2!.id,
+          gameMode: _gameMode!,
+          gameValue: _gameValue ?? _targetPoints!,
+          playerName: _player2Name,
+        );
+      }
+      
+      // Then start normal game logic
+      _isGameActive = true;
+      _timeInSeconds = 0;
+      _elapsedSeconds = 0;
+      _timer?.cancel();  // Cancel any existing timer
+      _flashTimer?.cancel();
+
+      // Start a new timer that ticks every second
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_gameMode == 'Time' && _gameValue != null) {
+          _timeInSeconds++;
+          
+          // Check remaining time
+          int remainingTime = (_gameValue! * 60) - _timeInSeconds;
+          
+          if (remainingTime <= 30 && !_isFlashing) {
+            _startFlashing();
+          }
+          if (remainingTime <= 10 && _vibrationTimer == null) {
+            _startVibrating();
+          }
+          
+          if (remainingTime <= 0) {
+            _determineWinnerForTimeMode();
+            _endGame(); // Use new _endGame method
+            return;
+          }
+        } else {
+          // Points mode
+          _elapsedSeconds++;
+        }
+        notifyListeners();
+      });
+      
+      return _gameCode!;
+    } else {
+      // For non-hosts, just subscribe to the game
+      _gameSessionId = _gameCode;
+      _gameSyncService.subscribeToGame(_gameSessionId!);
+      _isGameActive = true;
+      return _gameCode!;
+    }
   }
 
   /// Manages visual feedback for last 30 seconds
@@ -290,14 +363,20 @@ class GameViewModel extends ChangeNotifier {
 
   /// Score management methods
   /// Increment points and check win conditions
-  void addPointToPlayer1() {
+  void addPointToPlayer1() async {
     _player1Points++;
+    if (_gameSessionId != null) {
+      await _gameSyncService.updateScore(_gameSessionId!, _player1Points, _player2Points);
+    }
     _checkWinCondition();
     notifyListeners();
   }
 
-  void addPointToPlayer2() {
+  void addPointToPlayer2() async {
     _player2Points++;
+    if (_gameSessionId != null) {
+      await _gameSyncService.updateScore(_gameSessionId!, _player1Points, _player2Points);
+    }
     _checkWinCondition();
     notifyListeners();
   }
@@ -338,8 +417,6 @@ class GameViewModel extends ChangeNotifier {
     }
   }
 
-
-
   /// Complete game state reset
   /// Returns all values to initial state
   void clearGameSettings() {
@@ -370,7 +447,7 @@ class GameViewModel extends ChangeNotifier {
   /// Ensures proper disposal of timers and vibration
   @override
   void dispose() {
-    // Clean up bluetooth resources
+    _gameSyncService.dispose();
     _bluetoothService.dispose();
     _car1 = null;
     _car2 = null;
@@ -468,11 +545,17 @@ class GameViewModel extends ChangeNotifier {
   }
 
   /// Handles hit events from cars
-  void _handleHit(Map<String, dynamic> data) {
+  void _handleHit(Map<String, dynamic> data) async {
+    if (_gameSessionId == null) return;
+    
     final targetCar = data['target'];
-    if (targetCar == 'Car1') {
+    final isPlayer1Hit = targetCar == 'Car1';
+    
+    await _gameSyncService.recordHit(_gameSessionId!, isPlayer1Hit);
+    
+    if (isPlayer1Hit) {
       addPointToPlayer2();
-    } else if (targetCar == 'Car2') {
+    } else {
       addPointToPlayer1();
     }
   }
@@ -525,5 +608,74 @@ class GameViewModel extends ChangeNotifier {
 
   void sendFire(String carId, bool isPressed) {
     _gameCommands.sendFire(carId, isPressed);
+  }
+
+  // Add this method to handle game updates
+  void _handleGameUpdate(GameSession session) {
+    _player1Points = session.player1Score;
+    _player2Points = session.player2Score;
+    
+    if (!session.isActive && _isGameActive) {
+      _endGame();
+    }
+    
+    notifyListeners();
+  }
+
+  // Add a method to join an existing game
+  Future<bool> joinGame(String code, [String? joinerName]) async {
+    try {
+      _gameCode = code;
+      
+      // Check if the game exists
+      final session = await _gameSyncService.getGameSession(code);
+      if (session == null) {
+        return false; // Game not found
+      }
+      
+      _gameSessionId = session.id;
+      _gameMode = session.gameMode;
+      _gameValue = session.gameValue;
+      
+      // If a joiner name is provided, update player2 name
+      if (joinerName != null) {
+        _player1Name = session.player1Name; // Host's name from session
+        _player2Name = joinerName;          // Joiner's name
+        
+        // Update the session to include player2 name
+        await _gameSyncService.updatePlayer2Name(_gameSessionId!, joinerName);
+        
+        // Set as NOT host
+        _isHost = false;
+      } else {
+        // Backward compatibility with old method
+        _player1Name = session.player1Name;
+        _player2Name = session.player2Name;
+      }
+      
+      // Subscribe to the game
+      _gameSyncService.subscribeToGame(_gameSessionId!);
+      _isGameActive = true;
+      
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print('Error joining game: $e');
+      return false;
+    }
+  }
+
+  /// Update player names based on whether the user is host or joiner
+  void assignPlayerNamesByRole(String playerName) {
+    if (_isHost) {
+      // If host, use this player's name as player1
+      player1Name = playerName;
+      // Player2 name will be updated when the other player joins
+    } else {
+      // If joiner, use this player's name as player2
+      player2Name = playerName;
+      // Player1 name will come from the host
+    }
+    notifyListeners();
   }
 }
