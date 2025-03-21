@@ -1,4 +1,3 @@
-
 /// Model representing a game session between two players
 class GameSession {
   /// Unique identifier for this game session
@@ -37,6 +36,9 @@ class GameSession {
   /// Player 2's current score
   final int player2Score;
 
+  /// Current elapsed seconds (time state)
+  final int currentTimeSeconds;
+
   /// Creates a new GameSession
   GameSession({
     required this.id,
@@ -51,6 +53,7 @@ class GameSession {
     this.isActive = true,
     this.player1Score = 0,
     this.player2Score = 0,
+    this.currentTimeSeconds = 0,
   });
 
   /// Creates a GameSession from JSON data received from the database
@@ -72,6 +75,7 @@ class GameSession {
       isActive: json['is_active'] ?? true,
       player1Score: json['player1_score'] ?? 0,
       player2Score: json['player2_score'] ?? 0,
+      currentTimeSeconds: json['current_time_seconds'] ?? 0,
     );
   }
 
@@ -90,6 +94,7 @@ class GameSession {
       'is_active': isActive,
       'player1_score': player1Score,
       'player2_score': player2Score,
+      'current_time_seconds': currentTimeSeconds,
     };
   }
 
@@ -107,6 +112,7 @@ class GameSession {
     bool? isActive,
     int? player1Score,
     int? player2Score,
+    int? currentTimeSeconds,
   }) {
     return GameSession(
       id: id ?? this.id,
@@ -121,6 +127,7 @@ class GameSession {
       isActive: isActive ?? this.isActive,
       player1Score: player1Score ?? this.player1Score,
       player2Score: player2Score ?? this.player2Score,
+      currentTimeSeconds: currentTimeSeconds ?? this.currentTimeSeconds,
     );
   }
 

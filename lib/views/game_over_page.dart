@@ -27,6 +27,17 @@ class _GameOverPageState extends State<GameOverPage> {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+    
+    // Make sure game is fully ended
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final gameViewModel = Provider.of<GameViewModel>(context, listen: false);
+      
+      // Ensure timers are cancelled
+      if (gameViewModel.winner != null) {
+        // Force a final end game check to ensure timers are stopped
+        gameViewModel.gameOver();
+      }
+    });
   }
 
   @override
@@ -140,7 +151,7 @@ class _GameOverPageState extends State<GameOverPage> {
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
-                                    gameViewModel.formattedTime,
+                                    gameViewModel.formattedFinalTime,  // Use this instead of formattedTime
                                     style: TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,

@@ -74,7 +74,14 @@ class LeaderboardViewModel extends ChangeNotifier {
   }
 
   Future<void> addEntry(LeaderboardEntry entry) async {
+    if (!_isConnected) {
+      print('Not connected to network, leaderboard entry not saved');
+      return;
+    }
+    
     try {
+      print('Saving leaderboard entry: ${entry.toJson()}');
+      
       await _supabase.from('leaderboard').insert({
         'winner': entry.winner,
         'loser': entry.loser,
@@ -86,11 +93,12 @@ class LeaderboardViewModel extends ChangeNotifier {
         'created_at': entry.timestamp.toIso8601String(),
       });
       
+      print('Leaderboard entry saved successfully');
+      
       // Refresh leaderboard after adding entry
       await loadLeaderboard();
     } catch (e) {
       print('Error adding leaderboard entry: $e');
-      rethrow;
     }
   }
 

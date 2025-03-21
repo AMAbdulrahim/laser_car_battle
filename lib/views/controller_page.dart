@@ -46,7 +46,11 @@ class _RemoteControllerState extends State<RemoteController> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _gameViewModel = Provider.of<GameViewModel>(context, listen: false);
 
-  	// Add mock cars for debugging
+
+    // Enable debug mode
+    _gameViewModel.setDebugBypassActiveCheck(true);
+  	
+    // Add mock cars for debugging
     _gameViewModel.setCar1(BluetoothDevice(
       id: 'mock-car1-id',
       name: 'Car1',

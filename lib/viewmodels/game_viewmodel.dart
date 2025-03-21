@@ -36,7 +36,7 @@ class GameViewModel extends ChangeNotifier {
   int? _gameValue;       // Flexible value storage for different game modes
   Timer? _timer;         // Cancellable timer for game duration
   int _timeInSeconds = 0;// Tracks elapsed/remaining time
-  bool _isGameActive = false; // Game state flag for UI updates
+  bool _isGameActive = false; // Game state flag for UI updates //!
   bool _isFlashing = false;   // Visual feedback state
   Timer? _flashTimer;         // Separate timer for flash animation
   Timer? _vibrationTimer;     // Dedicated timer for haptic feedback
@@ -69,6 +69,16 @@ class GameViewModel extends ChangeNotifier {
   // Add these fields near the top of the class
   String? _gameCode;
   String get gameCode => _gameCode ?? '';
+
+  // Add this flag near the top of your GameViewModel class with other boolean properties
+  bool _debugBypassActiveCheck = false; // Set to true to bypass isActive check during debugging
+  bool get debugBypassActiveCheck => _debugBypassActiveCheck;
+
+  // Add this field near other fields in GameViewModel
+  bool _leaderboardUpdated = false;
+
+  // First, add a "frozen" time property that won't change after game ends
+  int _finalElapsedSeconds = 0;
 
   // Public getters provide controlled access to private state
   // Maintaining encapsulation while allowing read access
@@ -117,6 +127,16 @@ class GameViewModel extends ChangeNotifier {
     final random = Random();
     return String.fromCharCodes(Iterable.generate(
         4, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+  }
+
+  // Add a setter to toggle this value
+  void setDebugBypassActiveCheck(bool value) {
+    _debugBypassActiveCheck = value;
+    print("Debug bypass active check set to: $value");
+    if (value) {
+      printDebugStatus();
+    }
+    notifyListeners();
   }
 
   // Update constructor
@@ -197,87 +217,130 @@ class GameViewModel extends ChangeNotifier {
     return formattedTime; // Use existing elapsed time formatter for Points mode
   }
 
+  // Add a getter for this value
+  int get finalElapsedSeconds => _finalElapsedSeconds;
+
+  // Add a getter for formatted final time that's static
+  String get formattedFinalTime {
+    int minutes = _finalElapsedSeconds ~/ 60;
+    int seconds = _finalElapsedSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
   /// Initializes and starts the game session
   /// Sets up timers, resets state, and manages game flow
   Future<String> startGame() async {
+    // Immediately set game as active for UI responsiveness
+    _isGameActive = true;
+    _timeInSeconds = 0;
+    _elapsedSeconds = 0;
+    _timer?.cancel();
+    _flashTimer?.cancel();
+    _leaderboardUpdated = false;
+    
+    // Generate game code immediately (for host)
     if (isHost) {
       _gameCode = _generateGameCode();
-      
-      // Create new game session with the game code
-      final session = await _gameSyncService.createGameSession(GameSession(
-        id: _gameCode!,  // Use game code as ID
-        player1Id: _car1!.id ,//?? 'mock-car1-id',
-        player2Id: _car2!.id ,//?? 'mock-car2-id',
+    }
+    
+    // Start game timer immediately for responsive UI
+    _startGameTimer();
+    
+    // Notify listeners early to update UI
+    notifyListeners();
+    
+    // Now handle the network operations in parallel
+    if (isHost) {
+      // Create session object
+      final session = GameSession(
+        id: _gameCode!,
+        player1Id: _car1?.id ?? 'mock-car1-id',
+        player2Id: _car2?.id ?? 'mock-car2-id',
         player1Name: _player1Name,
         player2Name: _player2Name,
         gameMode: _gameMode!,
         gameValue: _gameValue ?? _targetPoints!,
         startTime: DateTime.now(),
-      ));
+      );
       
-      _gameSessionId = session.id;
-      _gameSyncService.subscribeToGame(_gameSessionId!);
-      
-      // First notify cars
-      if (_car1?.id != null) {
-        _gameCommands.sendGameStart(
-          _car1!.id,
-          gameMode: _gameMode!,
-          gameValue: _gameValue ?? _targetPoints!,
-          playerName: _player1Name,
-        );
-      }
-      if (_car2?.id != null) {
-        _gameCommands.sendGameStart(
-          _car2!.id,
-          gameMode: _gameMode!,
-          gameValue: _gameValue ?? _targetPoints!,
-          playerName: _player2Name,
-        );
-      }
-      
-      // Then start normal game logic
-      _isGameActive = true;
-      _timeInSeconds = 0;
-      _elapsedSeconds = 0;
-      _timer?.cancel();  // Cancel any existing timer
-      _flashTimer?.cancel();
-
-      // Start a new timer that ticks every second
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (_gameMode == 'Time' && _gameValue != null) {
-          _timeInSeconds++;
-          
-          // Check remaining time
-          int remainingTime = (_gameValue! * 60) - _timeInSeconds;
-          
-          if (remainingTime <= 30 && !_isFlashing) {
-            _startFlashing();
-          }
-          if (remainingTime <= 10 && _vibrationTimer == null) {
-            _startVibrating();
-          }
-          
-          if (remainingTime <= 0) {
-            _determineWinnerForTimeMode();
-            _endGame(); // Use new _endGame method
-            return;
-          }
-        } else {
-          // Points mode
-          _elapsedSeconds++;
-        }
-        notifyListeners();
-      });
-      
-      return _gameCode!;
+      // Execute these operations in parallel
+      await Future.wait([
+        // Create game session in database
+        _gameSyncService.createGameSession(session).then((s) {
+          _gameSessionId = s.id;
+          _gameSyncService.subscribeToGame(_gameSessionId!);
+        }).catchError((e) => print('Error creating game session: $e')),
+        
+        // Send game start to car 1 if connected
+        _car1?.id != null 
+            ? _gameCommands.sendGameStart(
+                _car1!.id,
+                gameMode: _gameMode!,
+                gameValue: _gameValue ?? _targetPoints!,
+                playerName: _player1Name,
+              ).catchError((e) => print('Error sending to car 1: $e'))
+            : Future.value(),
+        
+        // Send game start to car 2 if connected
+        _car2?.id != null 
+            ? _gameCommands.sendGameStart(
+                _car2!.id,
+                gameMode: _gameMode!,
+                gameValue: _gameValue ?? _targetPoints!,
+                playerName: _player2Name,
+              ).catchError((e) => print('Error sending to car 2: $e'))
+            : Future.value(),
+      ]);
     } else {
       // For non-hosts, just subscribe to the game
       _gameSessionId = _gameCode;
       _gameSyncService.subscribeToGame(_gameSessionId!);
-      _isGameActive = true;
-      return _gameCode!;
     }
+    
+    return _gameCode!;
+  }
+
+  // Extract timer setup to a separate method
+  void _startGameTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (_gameMode == 'Time' && _gameValue != null) {
+        _timeInSeconds++;
+        
+        // Check remaining time
+        int remainingTime = (_gameValue! * 60) - _timeInSeconds;
+        
+        if (remainingTime <= 30 && !_isFlashing) {
+          _startFlashing();
+        }
+        if (remainingTime <= 10 && _vibrationTimer == null) {
+          _startVibrating();
+        }
+        
+        if (remainingTime <= 0) {
+          _determineWinnerForTimeMode();
+          _endGame();
+          return;
+        }
+        
+        // Sync time less frequently (every 2 seconds)
+        if (_isHost && _timeInSeconds % 2 == 0 && _gameSessionId != null) {
+          // Don't await this - let it happen in background
+          _gameSyncService.updateGameTime(_gameSessionId!, _timeInSeconds)
+              .catchError((e) => print('Error updating time: $e'));
+        }
+      } else {
+        // Points mode
+        _elapsedSeconds++;
+        
+        // Sync elapsed time for Points mode (less frequently)
+        if (_isHost && _elapsedSeconds % 2 == 0 && _gameSessionId != null) {
+          // Don't await this - let it happen in background
+          _gameSyncService.updateGameTime(_gameSessionId!, _elapsedSeconds)
+              .catchError((e) => print('Error updating elapsed time: $e'));
+        }
+      }
+      notifyListeners();
+    });
   }
 
   /// Manages visual feedback for last 30 seconds
@@ -312,6 +375,12 @@ class GameViewModel extends ChangeNotifier {
   /// Gracefully terminates game session
   /// Cleans up resources and triggers callbacks
   Future<void> stopGame() async {
+    // Add bypass check
+    if (_debugBypassActiveCheck && _isGameActive) {
+      print("Debug bypass active: game not stopped");
+      return;
+    }
+
     _isGameActive = false;
     
     // Cancel all timers
@@ -324,6 +393,11 @@ class GameViewModel extends ChangeNotifier {
     
     // Make sure vibration is completely stopped
     await Vibration.cancel();
+    
+    // Update the database
+    if (_gameSessionId != null) {
+      await _gameSyncService.endGame(_gameSessionId!);
+    }
 
     try {
       // Reset debug values for both controllers
@@ -363,22 +437,38 @@ class GameViewModel extends ChangeNotifier {
 
   /// Score management methods
   /// Increment points and check win conditions
-  void addPointToPlayer1() async {
+  void addPointToPlayer1() {
+    // Update locally first
     _player1Points++;
-    if (_gameSessionId != null) {
-      await _gameSyncService.updateScore(_gameSessionId!, _player1Points, _player2Points);
-    }
-    _checkWinCondition();
+    
+    // Notify UI immediately
     notifyListeners();
+    
+    // Check win condition
+    _checkWinCondition();
+    
+    // Update server in background without awaiting
+    if (_gameSessionId != null) {
+      _gameSyncService.updateScore(_gameSessionId!, _player1Points, _player2Points)
+          .catchError((e) => print('Error updating score: $e'));
+    }
   }
 
-  void addPointToPlayer2() async {
+  void addPointToPlayer2() {
+    // Update locally first
     _player2Points++;
-    if (_gameSessionId != null) {
-      await _gameSyncService.updateScore(_gameSessionId!, _player1Points, _player2Points);
-    }
-    _checkWinCondition();
+    
+    // Notify UI immediately
     notifyListeners();
+    
+    // Check win condition
+    _checkWinCondition();
+    
+    // Update server in background without awaiting
+    if (_gameSessionId != null) {
+      _gameSyncService.updateScore(_gameSessionId!, _player1Points, _player2Points)
+          .catchError((e) => print('Error updating score: $e'));
+    }
   }
 
   /// Resets score counters to initial state
@@ -391,16 +481,43 @@ class GameViewModel extends ChangeNotifier {
   /// Evaluates if win conditions are met
   /// Handles both time and points based modes
   void _checkWinCondition() {
+    // Exit immediately if game is already inactive
+    if (!_isGameActive) return;
+    
+    bool shouldEndGame = false;
+    
     if (_gameMode == 'Points' && _targetPoints != null) {
+      // Check if either player has reached target points
       if (_player1Points >= _targetPoints!) {
         _winner = _player1Name;
-        _endGame();
+        shouldEndGame = true;
+        print("Player 1 reached target points: $_player1Points >= $_targetPoints");
       } else if (_player2Points >= _targetPoints!) {
         _winner = _player2Name;
-        _endGame();
+        shouldEndGame = true;
+        print("Player 2 reached target points: $_player2Points >= $_targetPoints");
       }
     } else if (_gameMode == 'Time' && _timeInSeconds >= _gameValue! * 60) {
       _determineWinnerForTimeMode();
+      shouldEndGame = true;
+      print("Time limit reached");
+    }
+    
+    // If we should end the game, IMMEDIATELY disable inputs and timers
+    if (shouldEndGame) {
+      print("Game ending due to win condition");
+      
+      // CRITICAL: Immediately disable all inputs and stop timers
+      _isGameActive = false;
+      _timer?.cancel();
+      _flashTimer?.cancel();
+      _vibrationTimer?.cancel();
+      _isFlashing = false;
+      
+      // Notify UI instantly to prevent additional input acceptance
+      notifyListeners();
+      
+      // Now safely perform the full game ending process
       _endGame();
     }
   }
@@ -460,71 +577,96 @@ class GameViewModel extends ChangeNotifier {
   }
 
   Future<void> _endGame() async {
-    // Stop all ongoing processes first
+    print("_endGame() called, is game active: $_isGameActive");
+    
+    // CRITICAL: Capture final time BEFORE cancelling timers
+    _finalElapsedSeconds = _gameMode == 'Time' ? _timeInSeconds : _elapsedSeconds;
+    
+    // CRITICAL: Ensure all timers are immediately canceled
     _timer?.cancel();
+    _timer = null; // Set to null to ensure it can't be used elsewhere
+    
     _flashTimer?.cancel();
+    _flashTimer = null;
+    
     _vibrationTimer?.cancel();
+    _vibrationTimer = null;
+    
     _isFlashing = false;
-    await Vibration.cancel();
+    
+    // Cancel vibrations immediately
+    Vibration.cancel();
+    
+    // Ensure game is marked inactive
     _isGameActive = false;
     
-    // Try to save to leaderboard if available
-    if (_leaderboardViewModel?.isConnected == true && _winner != null) {
-      // Handle draw case specifically
-      if (_winner == 'Draw') {
-        // For draws, use player names instead of "Draw"
-        final entry = LeaderboardEntry(
-          winner: _player1Name, // Use player 1's name instead of "Draw"
-          loser: _player2Name,  // Use player 2's name
-          winnerScore: _player1Points, // Both scores should be equal in a draw
-          loserScore: _player2Points,
-          gameMode: _gameMode!,
-          gameValue: _gameMode == 'Time' 
-              ? '$_gameValue minutes'
-              : '$_targetPoints points',
-          timestamp: DateTime.now(),
-          duration: _gameMode == 'Points' 
-              ? _elapsedSeconds  // For Points mode: use elapsed time
-              : _gameValue! * 60, // For Time mode: use the set game duration
-        );
-        
-        try {
-          await _leaderboardViewModel?.addEntry(entry);
-        } catch (e) {
-          print('Failed to save to leaderboard: $e');
-        }
-      } else {
-        // Normal win/lose case (no change to your existing code)
-        final entry = LeaderboardEntry(
-          winner: _winner!,
-          loser: _winner == _player1Name ? _player2Name : _player1Name,
-          winnerScore: _winner == _player1Name ? _player1Points : _player2Points,
-          loserScore: _winner == _player1Name ? _player2Points : _player1Points,
-          gameMode: _gameMode!,
-          gameValue: _gameMode == 'Time' 
-              ? '$_gameValue minutes'
-              : '$_targetPoints points',
-          timestamp: DateTime.now(),
-          duration: _gameMode == 'Points' 
-              ? _elapsedSeconds  // For Points mode: use elapsed time
-              : _gameValue! * 60, // For Time mode: use the set game duration
-        );
-        
-        try {
-          await _leaderboardViewModel?.addEntry(entry);
-        } catch (e) {
-          print('Failed to save to leaderboard: $e');
-        }
-      }
-    }
+    // Create a local copy of the winner to ensure consistency
+    final localWinner = _winner;
     
+    // Notify UI immediately to update visuals
     notifyListeners();
     
-    // Only call game over callback after cleanup is complete
-    if (_winner != null && _onGameOver != null) {
+    // Run background tasks in parallel for efficiency
+    Future.wait([
+      // Update database
+      _gameSessionId != null 
+          ? _gameSyncService.endGame(_gameSessionId!)
+          : Future.value(),
+      
+      // Save to leaderboard if available
+      _saveToLeaderboard(localWinner),
+      
+      // Reset any controllers
+      _resetControllers(),
+    ]).catchError((e) => print('Error in background tasks: $e'));
+    
+    // Only call game over callback after local state is updated
+    if (localWinner != null && _onGameOver != null) {
       _onGameOver!();
     }
   }
+
+  Future<void> _saveToLeaderboard(String? localWinner) async {
+  if (_leaderboardUpdated || 
+      _leaderboardViewModel == null || 
+      !_leaderboardViewModel!.isConnected || 
+      localWinner == null ||
+      localWinner == 'Draw') {
+    return;
+  }
+  
+  try {
+    _leaderboardUpdated = true; // Mark as updated to prevent duplicates
+    
+    // Determine winner and loser
+    String winnerName = localWinner;
+    String loserName = winnerName == _player1Name ? _player2Name : _player1Name;
+    int winnerScore = winnerName == _player1Name ? _player1Points : _player2Points;
+    int loserScore = winnerName == _player1Name ? _player2Points : _player1Points;
+    
+    // Calculate duration in seconds
+    int duration = _gameMode == 'Time' ? _timeInSeconds : _elapsedSeconds;
+    
+    // Create and save leaderboard entry
+    LeaderboardEntry entry = LeaderboardEntry(
+      winner: winnerName,
+      loser: loserName,
+      winnerScore: winnerScore,
+      loserScore: loserScore,
+      gameMode: _gameMode!,
+      gameValue: _gameMode == 'Time' 
+          ? _gameValue.toString() 
+          : _targetPoints.toString(),
+      timestamp: DateTime.now(),
+      duration: duration,
+    );
+    
+    await _leaderboardViewModel!.addEntry(entry);
+    print("Game saved to leaderboard: Winner: $winnerName, Score: $winnerScore-$loserScore");
+  } catch (e) {
+    print("Error saving to leaderboard: $e");
+  }
+}
 
   /// Handles joystick input
   void handleJoystick(String carId, double x, double y) {
@@ -545,18 +687,58 @@ class GameViewModel extends ChangeNotifier {
   }
 
   /// Handles hit events from cars
-  void _handleHit(Map<String, dynamic> data) async {
-    if (_gameSessionId == null) return;
+  void _handleHit(Map<String, dynamic> data) {
+    // First, check if game is still active (fastest possible exit)
+    if (!_isGameActive || _gameSessionId == null) return;
     
     final targetCar = data['target'];
     final isPlayer1Hit = targetCar == 'Car1';
     
-    await _gameSyncService.recordHit(_gameSessionId!, isPlayer1Hit);
+    // CRITICAL: Make a local atomic update with final checks
+    // This prevents multiple points from being applied during concurrent calls
+    int currentPlayer1Points = _player1Points;
+    int currentPlayer2Points = _player2Points;
     
+    // Update local state optimistically but with atomic operation
     if (isPlayer1Hit) {
-      addPointToPlayer2();
+      currentPlayer2Points++;
+      _player2Points = currentPlayer2Points;
     } else {
-      addPointToPlayer1();
+      currentPlayer1Points++;
+      _player1Points = currentPlayer1Points;
+    }
+    
+    // SYNCHRONIZATION LOCK: Immediately check if points threshold is reached
+    if (_gameMode == 'Points' && _targetPoints != null) {
+      if (currentPlayer1Points >= _targetPoints!) {
+        // Player 1 wins - lock game state
+        _winner = _player1Name;
+        _isGameActive = false;  // Immediately lock the game state
+        
+        // Skip server update - we'll end the game
+        notifyListeners();
+        _endGame();
+        return; // EXIT EARLY - don't process more
+      }
+      else if (currentPlayer2Points >= _targetPoints!) {
+        // Player 2 wins - lock game state
+        _winner = _player2Name;
+        _isGameActive = false;  // Immediately lock the game state
+        
+        // Skip server update - we'll end the game
+        notifyListeners();
+        _endGame();
+        return; // EXIT EARLY - don't process more
+      }
+    }
+    
+    // Notify UI immediately for responsive feedback
+    notifyListeners();
+    
+    // Only if we're still active, update server
+    if (_isGameActive && _gameSessionId != null) {
+      _gameSyncService.recordHit(_gameSessionId!, isPlayer1Hit)
+        .catchError((e) => print('Error recording hit: $e'));
     }
   }
 
@@ -612,11 +794,54 @@ class GameViewModel extends ChangeNotifier {
 
   // Add this method to handle game updates
   void _handleGameUpdate(GameSession session) {
+    // Update scores
     _player1Points = session.player1Score;
     _player2Points = session.player2Score;
     
-    if (!session.isActive && _isGameActive) {
-      _endGame();
+    // Sync time if not host
+    if (!_isHost) {
+      if (_gameMode == 'Time') {
+        _timeInSeconds = session.currentTimeSeconds;
+      } else {
+        _elapsedSeconds = session.currentTimeSeconds;
+      }
+    }
+    
+    // Check if the game was ended externally, but respect debug bypass flag
+    if (!session.isActive && _isGameActive && !_debugBypassActiveCheck) {
+      print("Game ended externally via Supabase");
+      
+      // Local game is still active but database says it's over
+      _isGameActive = false;
+      
+      // CRITICAL: Cancel ALL timers and set to null to prevent reuse
+      _timer?.cancel();
+      _timer = null;
+      
+      _flashTimer?.cancel();
+      _flashTimer = null;
+      
+      _vibrationTimer?.cancel();
+      _vibrationTimer = null;
+      
+      _isFlashing = false;
+      Vibration.cancel();
+      
+      // Determine winner if not already set
+      if (_winner == null) {
+        _determineWinnerForTimeMode();
+      }
+      
+      // Only update leaderboard once
+      if (!_leaderboardUpdated) {
+        _updateLeaderboard();
+        _leaderboardUpdated = true;
+      }
+      
+      // Trigger game over callback
+      if (_onGameOver != null) {
+        _onGameOver!();
+      }
     }
     
     notifyListeners();
@@ -626,41 +851,81 @@ class GameViewModel extends ChangeNotifier {
   Future<bool> joinGame(String code, [String? joinerName]) async {
     try {
       _gameCode = code;
+      _isGameActive = true; // Set active early for UI responsiveness
       
-      // Check if the game exists
-      final session = await _gameSyncService.getGameSession(code);
+      // Start a parallel fetch of the session data
+      final sessionFuture = _gameSyncService.getGameSession(code);
+      
+      // Prepare for the game by setting up local timer
+      _gameSessionId = code;
+      
+      // Start timer immediately (optimistically)
+      _startGameTimer();
+      
+      // Notify listeners for immediate UI update
+      notifyListeners();
+      
+      // Now wait for session data
+      final session = await sessionFuture;
       if (session == null) {
-        return false; // Game not found
+        // Rollback our optimistic updates
+        _isGameActive = false;
+        _timer?.cancel();
+        notifyListeners();
+        return false;
       }
       
-      _gameSessionId = session.id;
+      // Check if game is active, but allow debug bypass
+      if (!session.isActive && !_debugBypassActiveCheck) {
+        _isGameActive = false;
+        _timer?.cancel();
+        notifyListeners();
+        return false;
+      }
+      
+      // Setup game parameters
       _gameMode = session.gameMode;
       _gameValue = session.gameValue;
       
-      // If a joiner name is provided, update player2 name
+      // Initialize time based on session data
+      if (_gameMode == 'Time') {
+        _timeInSeconds = session.currentTimeSeconds;
+      } else {
+        _elapsedSeconds = session.currentTimeSeconds;
+        if (_gameMode == 'Points') {
+          _targetPoints = _gameValue;
+        }
+      }
+      
+      // Handle player names
       if (joinerName != null) {
-        _player1Name = session.player1Name; // Host's name from session
-        _player2Name = joinerName;          // Joiner's name
+        _player1Name = session.player1Name;
+        _player2Name = joinerName;
         
-        // Update the session to include player2 name
-        await _gameSyncService.updatePlayer2Name(_gameSessionId!, joinerName);
+        // Update player2 name in background
+        _gameSyncService.updatePlayer2Name(_gameSessionId!, joinerName)
+            .catchError((e) => print('Error updating player name: $e'));
         
-        // Set as NOT host
         _isHost = false;
       } else {
-        // Backward compatibility with old method
         _player1Name = session.player1Name;
         _player2Name = session.player2Name;
       }
       
-      // Subscribe to the game
+      // Subscribe to real-time updates
       _gameSyncService.subscribeToGame(_gameSessionId!);
-      _isGameActive = true;
+      
+      // Update scores from server
+      _player1Points = session.player1Score;
+      _player2Points = session.player2Score;
       
       notifyListeners();
       return true;
     } catch (e) {
       print('Error joining game: $e');
+      _isGameActive = false;
+      _timer?.cancel();
+      notifyListeners();
       return false;
     }
   }
@@ -677,5 +942,112 @@ class GameViewModel extends ChangeNotifier {
       // Player1 name will come from the host
     }
     notifyListeners();
+  }
+
+  /// Public method to end game from external triggers
+  Future<void> gameOver() async {
+    if (!_isGameActive) return;
+    
+    // Add bypass check here too
+    if (_debugBypassActiveCheck) {
+      print("Debug bypass active: gameOver prevented");
+      return;
+    }
+    
+    // CRITICAL: Capture final time BEFORE cancelling timers
+    _finalElapsedSeconds = _gameMode == 'Time' ? _timeInSeconds : _elapsedSeconds;
+    
+    // CRITICAL: Cancel all timers IMMEDIATELY to stop elapsed time
+    _timer?.cancel();
+    _timer = null;
+    
+    _flashTimer?.cancel();
+    _flashTimer = null;
+    
+    _vibrationTimer?.cancel();
+    _vibrationTimer = null;
+    
+    // Determine winner if not already set
+    if (_winner == null) {
+      _determineWinnerForTimeMode();
+    }
+    
+    // Ensure game is inactive
+    _isGameActive = false;
+    
+    // Notify UI
+    notifyListeners();
+    
+    // Complete ending process
+    await _endGame();
+  }
+
+  // Add this helper method
+  Future<void> _updateLeaderboard() async {
+    if (_leaderboardViewModel == null || !_leaderboardViewModel!.isConnected || _winner == null) {
+      return;
+    }
+    
+    try {
+      if (_winner != "Draw") {
+        // Determine winner and loser
+        String winnerName = _winner!;
+        String loserName = winnerName == _player1Name ? _player2Name : _player1Name;
+        int winnerScore = winnerName == _player1Name ? _player1Points : _player2Points;
+        int loserScore = winnerName == _player1Name ? _player2Points : _player1Points;
+        
+        // Calculate duration
+        int duration = _gameMode == 'Time' ? _timeInSeconds : _elapsedSeconds;
+        
+        LeaderboardEntry entry = LeaderboardEntry(
+          winner: winnerName,
+          loser: loserName,
+          winnerScore: winnerScore,
+          loserScore: loserScore,
+          gameMode: _gameMode!,
+          gameValue: _gameMode == 'Time' ? _gameValue.toString() : _targetPoints.toString(),
+          timestamp: DateTime.now(),
+          duration: duration,
+        );
+        
+        await _leaderboardViewModel!.addEntry(entry);
+        print('Game recorded in leaderboard');
+      }
+    } catch (e) {
+      print('Error updating leaderboard: $e');
+    }
+  }
+
+  // Add this helper method to reset controllers
+  Future<void> _resetControllers() async {
+    try {
+      if (navigatorKey.currentContext != null) {
+        final player1Controller = Provider.of<CarControllerViewModel>(
+          navigatorKey.currentContext!, 
+          listen: false
+        );
+        final player2Controller = Provider.of<CarControllerViewModel>(
+          navigatorKey.currentContext!, 
+          listen: false
+        );
+        
+        player1Controller.resetDebugValues();
+        player2Controller.resetDebugValues();
+      }
+    } catch (e) {
+      print('Error resetting debug values: $e');
+    }
+  }
+
+  // Add this helper method to print debug status
+  void printDebugStatus() {
+    if (_debugBypassActiveCheck) {
+      print("=== DEBUG STATUS ===");
+      print("Debug bypass: ACTIVE");
+      print("Game active: $_isGameActive");
+      print("Game mode: $_gameMode");
+      print("Game session ID: $_gameSessionId");
+      print("==================");
+    }
   }
 }

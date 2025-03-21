@@ -1,12 +1,14 @@
+import 'package:laser_car_battle/models/game_session.dart';
+
 class LeaderboardEntry {
-  final String winner;
-  final String loser;
-  final int winnerScore;
-  final int loserScore;
-  final String gameMode;
-  final String? gameValue;
-  final DateTime timestamp;
-  final int? duration; // Make nullable since older entries won't have it
+  final String winner;      // Winner's name
+  final String loser;       // Loser's name
+  final int winnerScore;    // Winner's final score
+  final int loserScore;     // Loser's final score
+  final String gameMode;    // "Time" or "Points"
+  final String? gameValue;  // Target points or time limit (as string)
+  final DateTime timestamp; // When the game ended
+  final int? duration;      // Game duration in seconds
 
   LeaderboardEntry({
     required this.winner,
@@ -45,6 +47,26 @@ class LeaderboardEntry {
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
       duration: json['duration'],
+    );
+  }
+  
+  // Helper method to create entry from GameSession
+  static LeaderboardEntry fromGameSession(
+    GameSession session, 
+    String winner,
+    String loser,
+    int winnerScore, 
+    int loserScore
+  ) {
+    return LeaderboardEntry(
+      winner: winner,
+      loser: loser,
+      winnerScore: winnerScore,
+      loserScore: loserScore,
+      gameMode: session.gameMode,
+      gameValue: session.gameValue.toString(),
+      timestamp: DateTime.now(),
+      duration: session.currentTimeSeconds,
     );
   }
 }

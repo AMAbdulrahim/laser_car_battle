@@ -76,10 +76,16 @@ class GameSyncService {
 
   /// Marks a game as ended with the current timestamp
   Future<void> endGame(String gameId) async {
-    await _supabase.from('game_sessions').update({
-      'is_active': false, // Mark game as inactive
-      'end_time': DateTime.now().toIso8601String(), // Record end time
-    }).eq('id', gameId);
+    try {
+      await _supabase.from('game_sessions').update({
+        'is_active': false,
+        'end_time': DateTime.now().toIso8601String(),
+      }).eq('id', gameId);
+      
+      print('Game session $gameId marked as inactive');
+    } catch (e) {
+      print('Error ending game session: $e');
+    }
   }
 
   /// Records a player hit, increments the appropriate score,
@@ -146,11 +152,43 @@ class GameSyncService {
     }
   }
 
+  /// Fetches all active game sessions from the database
+  /// Returns a list of GameSession objects for games still in progress
+  Future<List<GameSession>> getActiveGameSessions() async {
+    try {
+      final response = await _supabase
+          .from('game_sessions')
+          .select()
+          .eq('is_active', true)
+          .order('start_time', ascending: false); // Most recent games first
+      
+      // Convert the response to a list of GameSession objects
+      return (response as List<dynamic>)
+          .map((game) => GameSession.fromJson(game))
+          .toList();
+    } catch (e) {
+      print('Error fetching active game sessions: $e');
+      return []; // Return empty list on error
+    }
+  }
+
   /// Updates player2's name when they join the game
   Future<void> updatePlayer2Name(String gameId, String player2Name) async {
     await _supabase.from('game_sessions').update({
       'player2_name': player2Name,
     }).eq('id', gameId);
+  }
+
+  /// Updates the current time in the game session
+  Future<void> updateGameTime(String gameId, int timeSeconds) async {
+    try {
+      // Use update to ensure atomicity
+      await _supabase.from('game_sessions').update({
+        'current_time_seconds': timeSeconds,
+      }).eq('id', gameId);
+    } catch (e) {
+      print('Error updating game time: $e');
+    }
   }
 
   /// Cleanup method to unsubscribe from the realtime channel
