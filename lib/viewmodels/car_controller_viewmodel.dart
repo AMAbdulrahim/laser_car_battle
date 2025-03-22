@@ -39,15 +39,16 @@ class CarControllerViewModel extends ChangeNotifier {
   /// Updates joystick position with precision rounding
   /// @param x Horizontal axis value (-1.0 to 1.0)
   /// @param y Vertical axis value (-1.0 to 1.0)
-  void updateJoystickPosition(double x, double y) {
-    // Comment out connection check during development
-    // if (!isCarConnected) return;
-    
+  /// @param notify Whether to call notifyListeners (defaults to true)
+  void updateJoystickPosition(double x, double y, {bool notify = true}) {
     // Round to 2 decimal places for practical precision
-    _xAxis = x;  // Remove parsing since values are already correct
+    _xAxis = x;
     _yAxis = y;
     _lastAction = 'Joystick: (${_xAxis.toStringAsFixed(2)}, ${_yAxis.toStringAsFixed(2)})';
-    notifyListeners();
+    
+    if (notify) {
+      notifyListeners();
+    }
     
     // Debug output
     print('DEBUG - Player $playerNumber Joystick: x=$_xAxis, y=$_yAxis');
@@ -151,5 +152,23 @@ class CarControllerViewModel extends ChangeNotifier {
     _lastAction = 'Game Reset';
     notifyListeners();
     print('DEBUG - Player $playerNumber values reset');
+  }
+
+  /// Safe cleanup of controller state - use when navigating away
+  void cleanup() {
+    // Reset control values without triggering UI updates
+    _xAxis = 0;
+    _yAxis = 0;
+    _isBraking = false;
+    
+    // Don't call notifyListeners here - this is for clean shutdown
+    
+    // Clean up any other resources as needed
+    final currentCarId = carId;
+    if (currentCarId != null) {
+      // Send zeroed values to ensure car stops
+      gameViewModel.sendJoystickControl(currentCarId, 0, 0);
+      gameViewModel.sendBrake(currentCarId, false);
+    }
   }
 }

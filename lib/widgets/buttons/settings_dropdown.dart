@@ -38,52 +38,52 @@ class SettingsDropdown extends StatelessWidget {
         ),
       ),
       items: [
-        DropdownMenuItem(
-          value: 'toggle',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,  // Add this line
-            children: [
-              const Icon(Icons.swap_horiz, color: CustomColors.textPrimary),
-              const SizedBox(width: 10),
-              Text(
-                'Switch Controls',
-                style: TextStyle(
-                  color: CustomColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        DropdownMenuItem(
-          value: 'controlType',
-          child: Row(
-            children: [
-              const Icon(Icons.gamepad, color: CustomColors.textPrimary),
-              const SizedBox(width: 10),
-              Text(
-                'Toggle Control Type',
-                style: TextStyle(
-                  color: CustomColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-         DropdownMenuItem(
-          value: 'visualMode',
-          child: Row(
-            children: [
-              const Icon(Icons.dashboard, color: CustomColors.textPrimary), // Updated icon
-              const SizedBox(width: 10),
-              Text(
-                'Toggle Dashboard',
-                style: TextStyle(
-                  color: CustomColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
+        // DropdownMenuItem(
+        //   value: 'toggle',
+        //   child: Row(
+        //     mainAxisSize: MainAxisSize.min,  // Add this line
+        //     children: [
+        //       const Icon(Icons.swap_horiz, color: CustomColors.textPrimary),
+        //       const SizedBox(width: 10),
+        //       Text(
+        //         'Switch Controls',
+        //         style: TextStyle(
+        //           color: CustomColors.textPrimary,
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
+        // DropdownMenuItem(
+        //   value: 'controlType',
+        //   child: Row(
+        //     children: [
+        //       const Icon(Icons.gamepad, color: CustomColors.textPrimary),
+        //       const SizedBox(width: 10),
+        //       Text(
+        //         'Toggle Control Type',
+        //         style: TextStyle(
+        //           color: CustomColors.textPrimary,
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
+        //  DropdownMenuItem(
+        //   value: 'visualMode',
+        //   child: Row(
+        //     children: [
+        //       const Icon(Icons.dashboard, color: CustomColors.textPrimary), // Updated icon
+        //       const SizedBox(width: 10),
+        //       Text(
+        //         'Toggle Dashboard',
+        //         style: TextStyle(
+        //           color: CustomColors.textPrimary,
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
         DropdownMenuItem(
           value: 'debug',
           child: Row(

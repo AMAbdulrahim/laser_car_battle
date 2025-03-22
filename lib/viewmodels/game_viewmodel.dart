@@ -518,12 +518,18 @@ void _startLocalGameTimer() {
     return;
   }
 
+  // Mark game as inactive immediately
   _isGameActive = false;
   
-  // Cancel all timers
+  // ADDITION: Reset waiting state
+  _waitingForPlayers = false;
+  
+  // Cancel ALL timers
   _timer?.cancel();
   _flashTimer?.cancel();
   _vibrationTimer?.cancel();
+  // ADDITION: Cancel waiting room timer
+  _waitingRoomTimer?.cancel();
   
   // Reset states
   _isFlashing = false;
@@ -534,8 +540,13 @@ void _startLocalGameTimer() {
   // Update the database
   if (_gameSessionId != null) {
     await _gameSyncService.endGame(_gameSessionId!);
+    // After successful database update, clear session ID
+    _gameSessionId = null;
   }
 
+  // ADDITION: Reset game code
+  _gameCode = null;
+  
   // Reset player names to defaults
   _player1Name = 'Player 1';
   _player2Name = 'Player 2';

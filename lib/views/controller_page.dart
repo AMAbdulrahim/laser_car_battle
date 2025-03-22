@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/models/bluetooth_device.dart';
 import 'package:laser_car_battle/models/car_type.dart';
+import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/widgets/control/controller_header.dart';
 import 'package:laser_car_battle/widgets/control/control_layout.dart';
+import 'package:laser_car_battle/widgets/control/quick_toggle_bar.dart'; // Add this import
 import 'package:laser_car_battle/widgets/dashboard/dashboard_display.dart';
 import 'package:laser_car_battle/widgets/debug/debug_overlay.dart';
 import 'package:provider/provider.dart';
@@ -25,6 +28,7 @@ class _RemoteControllerState extends State<RemoteController> {
   double _maxSpeed = 1.0;
   bool _holdSteering = false;
   late final GameViewModel _gameViewModel;
+  late final CarControllerViewModel _controllerViewModel;
 
   void _handleSpeedChange(double value) {
     setState(() => _maxSpeed = value);
@@ -37,7 +41,7 @@ class _RemoteControllerState extends State<RemoteController> {
       _gameViewModel = Provider.of<GameViewModel>(context, listen: false);
 
       // Enable debug mode with confirmation
-      _gameViewModel.setDebugBypassActiveCheck(true);
+      _gameViewModel.setDebugBypassActiveCheck(false);
       print("DEBUG MODE ENABLED: ${_gameViewModel.debugBypassActiveCheck}");
       
       // Add mock cars for debugging
@@ -75,7 +79,17 @@ class _RemoteControllerState extends State<RemoteController> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Store the provider reference when it's safe to do so
+    _controllerViewModel = Provider.of<CarControllerViewModel>(context);
+  }
+
+  @override
   void dispose() {
+    // Use the stored reference instead of Provider.of
+    _controllerViewModel.cleanup();
+    
     // Only stop the game if we're not in debug bypass mode
     if (!_gameViewModel.debugBypassActiveCheck) {
       _gameViewModel.stopGame();
@@ -90,72 +104,166 @@ class _RemoteControllerState extends State<RemoteController> {
     ]);
     super.dispose();
   }
+  
+  // Add custom back handler
+  Future<bool> _onWillPop() async {
+    // Show confirmation dialog
+    final shouldPop = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (context) => AlertDialog(
+        backgroundColor: CustomColors.appBarBackground,
+        title: Text(
+          'Exit Game?',
+          style: TextStyle(color: CustomColors.textPrimary),
+        ),
+        content: Text(
+          'Are you sure you want to exit!? \nThis will end the current game!',
+          style: TextStyle(color: CustomColors.buttonText,
+          fontSize: AppSizes.fontLarge),
+        ),
+        actions: [
+          TextButton(
+        onPressed: () => Navigator.of(context).pop(false),
+        style: TextButton.styleFrom(
+          foregroundColor: Theme.of(context).colorScheme.secondary,
+        ),
+        child: const Text('Cancel'),
+          ),
+          TextButton(
+        onPressed: () {
+          // Use the stored reference instead of Provider.of
+          _controllerViewModel.cleanup();
+          
+          // Stop the game properly
+          _gameViewModel.stopGame();
+          Navigator.of(context).pop(true);
+        },
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.red,
+        ),
+        child: const Text('Exit'),
+          ),
+        ],
+      ),
+    );
+    return shouldPop ?? false; // This handling is good already
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<CarControllerViewModel>(
-      builder: (context, controller, child) {
-        return Scaffold(
-          body: Stack(
-            children: [
-              // Header section (settings, insights, scoreboard)
-              ControllerHeader(
-                onToggleControls: () {
-                  setState(() {
-                    _controlsOnLeft = !_controlsOnLeft;
-                  });
-                },
-                onToggleDebug: () {
-                  setState(() {
-                    _showDebugOverlay = !_showDebugOverlay;
-                  });
-                },
-                onToggleControlType: () {
-                  setState(() {
-                    _useJoystick = !_useJoystick;
-                  });
-                },
-                onToggleVisualMode: () {  
-                  setState(() {
-                    _useVisualIndicator = !_useVisualIndicator;
-                  });
-                },
-              ),
-              
-              // Dashboard/visual indicator
-              Positioned(
-                top: 180,
-                left: 0,
-                right: 0,
-                child: DashboardDisplay(
-                  speed: controller.yAxis,
-                  angle: controller.xAxis,
-                  maxSpeed: _maxSpeed,
-                  useVisualIndicator: _useVisualIndicator,
-                ),
-              ),
-              
-              // Controls (joystick/arrows, fire, brake)
-              ControlLayout(
-                controlsOnLeft: _controlsOnLeft,
-                useJoystick: _useJoystick,
-                maxSpeed: _maxSpeed,
-                holdSteering: _holdSteering,
-                controller: controller,
-                onSpeedChanged: _handleSpeedChange,
-                onToggleHoldSteering: (value) {
-                  setState(() {
-                    _holdSteering = value;
-                  });
-                },
-              ),
-              
-              // Debug overlay
-              if (_showDebugOverlay) DebugOverlay(controller: controller),
-            ],
-          ),
-        );
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          _onWillPop().then((value) {
+            if (value) {
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/',
+                (Route<dynamic> route) => false,
+              );
+            }
+          });
+        }
       },
+      child: Consumer<CarControllerViewModel>(
+        builder: (context, controller, child) {
+          return Scaffold(
+            body: Stack(
+              children: [
+                // Header section (settings, insights, scoreboard)
+                ControllerHeader(
+                  onToggleControls: () {
+                    setState(() {
+                      _controlsOnLeft = !_controlsOnLeft;
+                    });
+                  },
+                  onToggleDebug: () {
+                    setState(() {
+                      _showDebugOverlay = !_showDebugOverlay;
+                    });
+                  },
+                  onToggleControlType: () {
+                    setState(() {
+                      _useJoystick = !_useJoystick;
+                    });
+                  },
+                  onToggleVisualMode: () {  
+                    setState(() {
+                      _useVisualIndicator = !_useVisualIndicator;
+                    });
+                  },
+                ),
+                
+                // Dashboard/visual indicator
+                Positioned(
+                  top: 180,
+                  left: 0,
+                  right: 0,
+                  child: DashboardDisplay(
+                    speed: controller.yAxis,
+                    angle: controller.xAxis,
+                    maxSpeed: _maxSpeed,
+                    useVisualIndicator: _useVisualIndicator,
+                  ),
+                ),
+                
+                // Controls (joystick/arrows, fire, brake)
+                ControlLayout(
+                  controlsOnLeft: _controlsOnLeft,
+                  useJoystick: _useJoystick,
+                  maxSpeed: _maxSpeed,
+                  holdSteering: _holdSteering,
+                  controller: controller,
+                  onSpeedChanged: _handleSpeedChange,
+                  onToggleHoldSteering: (value) {
+                    setState(() {
+                      _holdSteering = value;
+                    });
+                  },
+                ),
+                
+                // Debug overlay
+                if (_showDebugOverlay) DebugOverlay(controller: controller),
+                
+                //Quick Toggle Bar positioned at the bottom
+                Positioned(
+                  bottom: 16,
+                  left: 0,
+                  right: 0,
+                  //child: FloatingToggleMenu(
+                  child: QuickToggleBar(
+                    controlsOnLeft: _controlsOnLeft,
+                    useJoystick: _useJoystick,
+                    useVisualIndicator: _useVisualIndicator,
+                    holdSteering: _holdSteering,
+                    onToggleControls: () {
+                      setState(() {
+                        _controlsOnLeft = !_controlsOnLeft;
+                      });
+                    },
+                    onToggleControlType: () {
+                      setState(() {
+                        _useJoystick = !_useJoystick;
+                      });
+                    },
+                    onToggleVisualMode: () {
+                      setState(() {
+                        _useVisualIndicator = !_useVisualIndicator;
+                      });
+                    },
+                    onToggleHoldSteering: () {
+                      setState(() {
+                        _holdSteering = !_holdSteering;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

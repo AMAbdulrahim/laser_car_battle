@@ -69,9 +69,9 @@ class ArrowControlsState extends State<ArrowControls> with SingleTickerProviderS
     // Clear any pressed keys
     keyPressed.clear();
     // Send final zero update
-    if (mounted) {
-      widget.onControlUpdate(0.0, 0.0);
-    }
+    // if (mounted) {
+    //   widget.onControlUpdate(0.0, 0.0);
+    // }
     super.dispose();
   }
 

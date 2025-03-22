@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
+import 'package:laser_car_battle/widgets/animations/rc_cars_animation.dart';
 import 'package:laser_car_battle/widgets/buttons/main_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_app_bar.dart';
 import 'package:laser_car_battle/widgets/text/project_title.dart';
@@ -38,21 +39,29 @@ class LandingPage extends StatelessWidget {
 
             // Title text
             Positioned(
-              top: 100,
+              top: 40,  // Moved up to make room for RC cars animation
               left: 0,
               right: 0,
               child: Center(
                 child: TitleText(),
               ),
             ),
+            
+            // RC Cars Animation
+            Positioned(
+              top: 160,
+              left: 0,
+              right: 0,
+              child: RcCarsAnimation(),
+            ),
 
-            // Column containing both buttons - FIXED VERSION
+            // Column containing both buttons
             Positioned(
               left: 0,
               right: 0,
-              bottom: 20, // Give some space at the bottom
+              bottom: 20,
               child: Column(
-                mainAxisSize: MainAxisSize.min, // Use min size to prevent overflow
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   MainButton(
                     backgroundColor: CustomColors.background,
@@ -65,7 +74,6 @@ class LandingPage extends StatelessWidget {
                     buttonText: "Enter Your Name",
                     onPressed: () => Navigator.of(context).pushNamed('/login'),
                   ),
-                  // Removed the extra SizedBox to prevent overflow
                 ],
               ),
             ),

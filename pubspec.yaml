@@ -73,6 +73,7 @@ flutter:
 
   assets:
     - lib/assets/images/
+    - assets/images/car.gif
     - .env
     # OR if you want to use the root assets directory:
     # - assets/images/

@@ -75,6 +75,17 @@ class _GameOverPageState extends State<GameOverPage> {
   Widget build(BuildContext context) {
     return PopScope(  // Changed from WillPopScope to PopScope
       canPop: false,  // Prevent back navigation
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          // Show a snackbar to inform users to use the back button
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please use the "Back to Menu" button'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
       child: Scaffold(
         body: Stack(
           children: [
