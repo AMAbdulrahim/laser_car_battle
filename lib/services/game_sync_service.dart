@@ -1,6 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:laser_car_battle/models/game_session.dart';
 
+// Add this new function type near the top of the file
+typedef GameStartCallback = void Function(String? startTimeString);
+
 /// Service responsible for handling real-time game synchronization between players
 /// using Supabase's Realtime features and database operations.
 class GameSyncService {
@@ -8,12 +11,20 @@ class GameSyncService {
   RealtimeChannel? _gameChannel; // Channel for real-time communication
   final Function(GameSession) onGameUpdate; // Callback for game state updates
   final Function(bool) onHit; // Callback triggered when a player is hit
+  
+  // Add a list of callbacks for game start events
+  final List<GameStartCallback> _gameStartListeners = [];
 
   /// Constructor requiring Supabase client and callbacks for game events
   GameSyncService(this._supabase, {
     required this.onGameUpdate,
     required this.onHit,
   });
+  
+  // Add this method to register game start listeners
+  void addGameStartListener(GameStartCallback callback) {
+    _gameStartListeners.add(callback);
+  }
 
   /// Creates a new game session in the database
   /// Returns the created GameSession with server-generated values
@@ -24,6 +35,93 @@ class GameSyncService {
         .select()
         .single();
     return GameSession.fromJson(response);
+  }
+
+  /// Creates a waiting room for a game session
+  Future<GameSession> createWaitingRoom(GameSession session) async {
+    // Create a temporary placeholder start time that will be updated when game truly starts
+    final now = DateTime.now();
+    
+    final sessionWithWaiting = GameSession(
+      id: session.id,
+      player1Id: session.player1Id,
+      player2Id: session.player2Id,
+      player1Name: session.player1Name,
+      player2Name: session.player2Name,
+      gameMode: session.gameMode,
+      gameValue: session.gameValue,
+      startTime: now, // Use placeholder time
+      isActive: true,
+      waitingForPlayers: true, // Explicitly set to true
+    );
+    
+    print("Creating waiting room with data: ${sessionWithWaiting.toJson()}");
+    
+    try {
+      final response = await _supabase
+          .from('game_sessions')
+          .insert(sessionWithWaiting.toJson())
+          .select()
+          .single();
+          
+      print("Waiting room created response: $response");
+      
+      final createdSession = GameSession.fromJson(response);
+      
+      // Verify the session was created with waiting_for_players set to true
+      print("Created session waiting status: ${createdSession.waitingForPlayers}");
+      
+      return createdSession;
+    } catch (e) {
+      print("Error creating waiting room: $e");
+      rethrow;
+    }
+  }
+  
+  /// Starts a game that was in waiting state
+  Future<void> startWaitingGame(String gameId) async {
+    try {
+      final startTime = DateTime.now().toUtc();
+      
+      print("Starting game $gameId with start time: $startTime");
+      
+      await _supabase.from('game_sessions').update({
+        'waiting_for_players': false,
+        'start_time': startTime.toIso8601String(),
+        'current_time_seconds': 0, // Ensure timer starts at zero
+      }).eq('id', gameId);
+      
+      print("Game session updated in database");
+      
+      // Broadcast game start event with the precise start time
+      if (_gameChannel != null) {
+        await _gameChannel!.sendBroadcastMessage(
+          event: 'game_start',
+          payload: {'start_time': startTime.toIso8601String()},
+        );
+        print("Game start broadcast sent");
+      }
+    } catch (e) {
+      print("Error starting waiting game: $e");
+    }
+  }
+  
+  /// Checks if a second player has joined
+  Future<bool> hasPlayerJoined(String gameId) async {
+    try {
+      final response = await _supabase
+          .from('game_sessions')
+          .select('player2_name')
+          .eq('id', gameId)
+          .single();
+          
+      // Check if player2_name is not null and not empty
+      return response['player2_name'] != 'Player 2' && 
+             response['player2_name'].toString().isNotEmpty;
+    } catch (e) {
+      print('Error checking for joined players: $e');
+      return false;
+    }
   }
 
   /// Sets up real-time subscription for a specific game
@@ -58,6 +156,20 @@ class GameSyncService {
         if (payload['player_hit'] != null) {
           final playerHit = payload['player_hit'] as bool;
           onHit(playerHit); // Notify listeners about the hit event
+        }
+      },
+    );
+    
+    // Add handler for game_start events
+    _gameChannel?.onBroadcast(
+      event: 'game_start',
+      callback: (payload) {
+        if (payload['start_time'] != null) {
+          final startTime = payload['start_time'] as String;
+          // Notify all registered listeners
+          for (var listener in _gameStartListeners) {
+            listener(startTime);
+          }
         }
       },
     );
@@ -169,6 +281,56 @@ class GameSyncService {
     } catch (e) {
       print('Error fetching active game sessions: $e');
       return []; // Return empty list on error
+    }
+  }
+
+  /// Updates the waiting status of a game session
+Future<void> updateWaitingStatus(String gameId, bool waitingStatus) async {
+  try {
+    await _supabase.from('game_sessions').update({
+      'waiting_for_players': waitingStatus,
+    }).eq('id', gameId);
+    
+    print("Updated waiting status to $waitingStatus for game $gameId");
+  } catch (e) {
+    print("Error updating waiting status: $e");
+    rethrow;
+  }
+}
+
+  /// Fetches all games currently waiting for players to join
+  Future<List<GameSession>> getWaitingGames() async {
+    try {
+      print('Fetching waiting games from Supabase...');
+      
+      // Skip the column check and go directly to the query
+      final response = await _supabase
+          .from('game_sessions')
+          .select()
+          .eq('waiting_for_players', true)
+          .eq('is_active', true);
+      
+      print('Raw response: $response');
+      
+      // Convert the response to a list of GameSession objects
+      final games = (response as List)
+          .map((game) => GameSession.fromJson(game))
+          .toList();
+          
+      print('Parsed ${games.length} waiting games');
+      return games;
+    } catch (e) {
+      print('Error fetching waiting games: $e');
+      
+      // Check if this is specifically about the missing column
+      if (e.toString().contains('column "waiting_for_players" does not exist')) {
+        print('The waiting_for_players column needs to be added to your database');
+        
+        // Return empty list since column doesn't exist
+        return [];
+      }
+      
+      return []; // Return empty list on any other error
     }
   }
 

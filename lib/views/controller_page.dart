@@ -46,9 +46,10 @@ class _RemoteControllerState extends State<RemoteController> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _gameViewModel = Provider.of<GameViewModel>(context, listen: false);
 
+      // Enable debug mode with confirmation
+      _gameViewModel.setDebugBypassActiveCheck(true);
+      print("DEBUG MODE ENABLED: ${_gameViewModel.debugBypassActiveCheck}");
 
-    // Enable debug mode
-    _gameViewModel.setDebugBypassActiveCheck(true);
   	
     // Add mock cars for debugging
     _gameViewModel.setCar1(BluetoothDevice(
@@ -75,7 +76,10 @@ class _RemoteControllerState extends State<RemoteController> {
         }
       };
 
+     // Only start the game if not waiting for players
+    if (!_gameViewModel.waitingForPlayers) {
       _gameViewModel.startGame();
+    }
     });
 
     SystemChrome.setPreferredOrientations([
@@ -86,7 +90,14 @@ class _RemoteControllerState extends State<RemoteController> {
 
   @override
   void dispose() {
-    _gameViewModel.stopGame();
+    // Only stop the game if we're not in debug bypass mode
+    if (!_gameViewModel.debugBypassActiveCheck) {
+      _gameViewModel.stopGame();
+    } else {
+      // In debug mode, just log that we're keeping the game active
+      print("DEBUG MODE: Keeping game active on controller page dispose");
+    }
+    
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,

@@ -39,6 +39,9 @@ class GameSession {
   /// Current elapsed seconds (time state)
   final int currentTimeSeconds;
 
+  /// Whether the game is waiting for players to join
+  final bool waitingForPlayers;
+
   /// Creates a new GameSession
   GameSession({
     required this.id,
@@ -54,6 +57,7 @@ class GameSession {
     this.player1Score = 0,
     this.player2Score = 0,
     this.currentTimeSeconds = 0,
+    this.waitingForPlayers = false,
   });
 
   /// Creates a GameSession from JSON data received from the database
@@ -76,6 +80,7 @@ class GameSession {
       player1Score: json['player1_score'] ?? 0,
       player2Score: json['player2_score'] ?? 0,
       currentTimeSeconds: json['current_time_seconds'] ?? 0,
+      waitingForPlayers: json['waiting_for_players'] ?? false,
     );
   }
 
@@ -95,6 +100,7 @@ class GameSession {
       'player1_score': player1Score,
       'player2_score': player2Score,
       'current_time_seconds': currentTimeSeconds,
+      'waiting_for_players': waitingForPlayers,
     };
   }
 
@@ -113,6 +119,7 @@ class GameSession {
     int? player1Score,
     int? player2Score,
     int? currentTimeSeconds,
+    bool? waitingForPlayers,
   }) {
     return GameSession(
       id: id ?? this.id,
@@ -128,6 +135,7 @@ class GameSession {
       player1Score: player1Score ?? this.player1Score,
       player2Score: player2Score ?? this.player2Score,
       currentTimeSeconds: currentTimeSeconds ?? this.currentTimeSeconds,
+      waitingForPlayers: waitingForPlayers ?? this.waitingForPlayers,
     );
   }
 

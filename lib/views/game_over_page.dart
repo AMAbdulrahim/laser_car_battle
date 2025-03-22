@@ -28,13 +28,13 @@ class _GameOverPageState extends State<GameOverPage> {
       DeviceOrientation.portraitDown,
     ]);
     
-    // Make sure game is fully ended
+    // Execute these critical steps ASAP
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final gameViewModel = Provider.of<GameViewModel>(context, listen: false);
       
-      // Ensure timers are cancelled
+      // Make sure game is fully ended and final values are set
       if (gameViewModel.winner != null) {
-        // Force a final end game check to ensure timers are stopped
+        // Explicitly call gameOver to ensure all final values are captured
         gameViewModel.gameOver();
       }
     });
@@ -133,7 +133,7 @@ class _GameOverPageState extends State<GameOverPage> {
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  '${gameViewModel.player1Points} - ${gameViewModel.player2Points}',
+                                  '${gameViewModel.finalPlayer1Points} - ${gameViewModel.finalPlayer2Points}',
                                   style: TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
@@ -151,7 +151,7 @@ class _GameOverPageState extends State<GameOverPage> {
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
-                                    gameViewModel.formattedFinalTime,  // Use this instead of formattedTime
+                                    gameViewModel.formattedFinalTime,  
                                     style: TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,

@@ -14,7 +14,7 @@
 - [ ] Add background music
 - [ ] Add animations for hits
 - [ ] Add xyz buttons for advanced gaming 
-- [ ] Add visual for speed and direction
+- [x] Add visual for speed and direction
   - it will be half circle normalizing the x value that is [-1,1] but to be in [0,1] and add indication of forward and backward and im not sure about the direction indicator yet.
 - [ ] Add accuracy rate at the end
   - as we already counts the number of fire and hits so it will be [(#hit/#fire)*100] then save it

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
-import 'package:laser_car_battle/viewmodels/player_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class ScoreBoard extends StatelessWidget {
