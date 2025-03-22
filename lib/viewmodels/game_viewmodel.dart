@@ -96,6 +96,12 @@ class GameViewModel extends ChangeNotifier {
   // First, add a flag to track if vibration is active
   bool _vibrationActive = false;
   
+  // Add these new fields in GameViewModel
+  bool _isLoadingWaitingGames = false;
+  bool get isLoadingWaitingGames => _isLoadingWaitingGames;
+  List<GameSession> _waitingGames = [];
+  List<GameSession> get waitingGames => _waitingGames;
+  
   // Public getters provide controlled access to private state
   // Maintaining encapsulation while allowing read access
   String? get gameMode => _gameMode;
@@ -817,7 +823,10 @@ void _startLocalGameTimer() {
     
     // Reset any controllers
     _resetControllers(),
-  ]).catchError((e) => print('Error in background tasks: $e'));
+  ]).catchError((e) {
+    print('Error in background tasks: $e');
+    return []; // Return empty list that matches Future<List<void>> return type
+  });
 
   // Now that database work is done, clear the session ID
   _gameSessionId = null;
@@ -1346,6 +1355,31 @@ void _startLocalGameTimer() {
     } catch (e) {
       print('Error in getWaitingGamesFromServer: $e');
       return []; // Return empty list on error
+    }
+  }
+
+  /// Loads waiting games and handles loading state
+  Future<void> loadWaitingGames() async {
+    _isLoadingWaitingGames = true;
+    notifyListeners();
+    
+    try {
+      final games = await getWaitingGamesFromServer();
+      
+      _waitingGames = games;
+      _isLoadingWaitingGames = false;
+      
+      // Debug output to verify games are being fetched
+      print('Loaded ${games.length} waiting games');
+      for (var game in games) {
+        print('Game ID: ${game.id}, Host: ${game.player1Name}');
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      print('Error loading waiting games: $e');
+      _isLoadingWaitingGames = false;
+      notifyListeners();
     }
   }
 }
