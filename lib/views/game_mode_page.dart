@@ -10,9 +10,7 @@ import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:pinput/pinput.dart';
-import 'package:laser_car_battle/services/game_sync_service.dart';
 import 'package:laser_car_battle/models/game_session.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 
 class GameModePage extends StatefulWidget {
