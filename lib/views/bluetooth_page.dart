@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/viewmodels/player_viewmodel.dart';
+import 'package:laser_car_battle/viewmodels/bluetooth_viewmodel.dart';
 import 'package:laser_car_battle/widgets/buttons/action_button.dart';
 import 'package:laser_car_battle/widgets/custom/custom_app_bar.dart';
 import 'package:laser_car_battle/widgets/insights/status_card.dart';
 import 'package:provider/provider.dart';
 
 class BluetoothPage extends StatelessWidget {
-  final bool isConnectedOpponent = true;	
-  final bool isConnectedPlayer = true;	
-
   const BluetoothPage({super.key});
 
   @override
@@ -30,8 +28,11 @@ class BluetoothPage extends StatelessWidget {
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight,
                 ),
-                child: Consumer<PlayerViewModel>(
-                  builder: (context, playerViewModel, child) {
+                child: Consumer2<PlayerViewModel, BluetoothViewModel>(
+                  builder: (context, playerViewModel, bluetoothViewModel, child) {
+                    final isConnectedPlayer = bluetoothViewModel.connectedDevice != null;
+                    final isConnectedOpponent = isConnectedPlayer;
+                    
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -56,17 +57,53 @@ class BluetoothPage extends StatelessWidget {
                             ),
                           ),
                         ),
-                        StatusCard(
-                          checkStatus: isConnectedPlayer,
-                          statusText: "Connect via Bluetooth", 
+                        
+                        InkWell(
+                          onTap: () {
+                            if (!isConnectedPlayer) {
+                              _showDeviceDialog(context, bluetoothViewModel);
+                            }
+                          },
+                          child: StatusCard(
+                            checkStatus: isConnectedPlayer,
+                            statusText: isConnectedPlayer 
+                                ? "Connected to ${bluetoothViewModel.connectedDevice?.name}"
+                                : "Tap to connect", 
+                          ),
                         ),
+                        
                         SizedBox(height: AppSizes.paddingLarge),
+                        
                         StatusCard(
                           checkStatus: isConnectedOpponent,
                           statusText: "Opponent", 
                         ),
+                        
                         SizedBox(height: AppSizes.paddingLarge * 1.5),
-                        if (isConnectedOpponent && true && isConnectedPlayer) ...[
+                        
+                        if (bluetoothViewModel.isScanning)
+                          CircularProgressIndicator(),
+                          
+                        SizedBox(height: AppSizes.paddingLarge),
+                          
+                        if (!isConnectedPlayer)
+                          ActionButton(
+                            onPressed: () {
+                              bluetoothViewModel.startScan();
+                            },
+                            buttonText: bluetoothViewModel.isScanning ? "Scanning..." : "Scan for Cars", 
+                          ),
+                          
+                        if (isConnectedPlayer)
+                          ActionButton(
+                            onPressed: () {
+                              bluetoothViewModel.disconnectDevice();
+                            },
+                            buttonText: "Disconnect", 
+                          ),
+                          
+                        if (isConnectedOpponent && isConnectedPlayer) ...[
+                          SizedBox(height: AppSizes.paddingLarge),
                           ActionButton(
                             onPressed: () {
                               Navigator.pushNamed(context, '/gameMode');
@@ -83,6 +120,65 @@ class BluetoothPage extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+  
+  void _showDeviceDialog(BuildContext context, BluetoothViewModel bluetoothViewModel) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Select your Car"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (bluetoothViewModel.devices.isEmpty && !bluetoothViewModel.isScanning)
+                      Text("No cars found. Press Scan to search."),
+                      
+                    if (bluetoothViewModel.isScanning)
+                      CircularProgressIndicator(),
+                      
+                    ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: bluetoothViewModel.devices.length,
+                      itemBuilder: (context, index) {
+                        final device = bluetoothViewModel.devices[index];
+                        return ListTile(
+                          title: Text(device.name),
+                          subtitle: Text(device.carType.toString()),
+                          trailing: Text("${device.rssi} dBm"),
+                          onTap: () {
+                            bluetoothViewModel.connectToDevice(device);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                bluetoothViewModel.startScan();
+              },
+              child: Text("Scan"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("Close"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

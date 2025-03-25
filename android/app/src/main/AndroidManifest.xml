@@ -1,20 +1,28 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools">
           
+    <!-- Internet permissions -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
+    <!-- Vibration permission -->
     <uses-permission android:name="android.permission.VIBRATE"/>
 
-
+    <!-- Bluetooth permissions (Android 12+) -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" 
                      android:usesPermissionFlags="neverForLocation"
                      tools:targetApi="s" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    
+    <!-- Location permissions (for Android 11 and below) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:maxSdkVersion="30" />
     
+    <!-- Basic Bluetooth permissions for older Android versions -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
     <application
         android:label="laser_car_battle"
         android:name="${applicationName}"

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:laser_car_battle/models/bluetooth_device.dart';
 import 'package:laser_car_battle/services/bluetooth_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// Manages Bluetooth Low Energy (BLE) functionality including device scanning,
 /// connection management, and state tracking.
@@ -37,11 +38,17 @@ class BluetoothViewModel extends ChangeNotifier {
   /// Starts scanning for BLE devices
   /// Automatically stops after 10 seconds
   Future<void> startScan() async {
-    // Prevent multiple concurrent scans
     if (_isScanning) return;
     
+    // Check permissions before starting scan
+    bool permissionsGranted = await _ensurePermissions();
+    if (!permissionsGranted) {
+      print('Required permissions not granted');
+      return;
+    }
+    
     _isScanning = true;
-    _devices.clear();  // Clear previous scan results
+    _devices.clear();
     notifyListeners();
     
     try {
@@ -75,7 +82,11 @@ class BluetoothViewModel extends ChangeNotifier {
             }
           }
         },
-        onError: (e) => print('Scan error: $e'),
+        onError: (e) {
+          print('Scan error: $e');
+          _isScanning = false;
+          notifyListeners();
+        },
       );
       
       // Auto-stop scan after 15 seconds to preserve battery
@@ -83,7 +94,8 @@ class BluetoothViewModel extends ChangeNotifier {
       
     } catch (e) {
       print('Start scan error: $e');
-      stopScan();
+      _isScanning = false;
+      notifyListeners();
     }
   }
   
@@ -157,5 +169,29 @@ class BluetoothViewModel extends ChangeNotifier {
     _connectionSubscription?.cancel();
     _bluetoothService.dispose();
     super.dispose();
+  }
+
+  // Add this method to your class
+  Future<bool> _ensurePermissions() async {
+    // For Android 12+ we need to request BLUETOOTH_SCAN and BLUETOOTH_CONNECT
+    if (await Permission.bluetoothScan.status.isDenied) {
+      await Permission.bluetoothScan.request();
+    }
+    
+    if (await Permission.bluetoothConnect.status.isDenied) {
+      await Permission.bluetoothConnect.request();
+    }
+    
+    // Location permission is required for BLE scanning
+    if (await Permission.location.status.isDenied) {
+      await Permission.location.request();
+    }
+    
+    // Check if permissions were granted
+    final locationStatus = await Permission.location.status;
+    final scanStatus = await Permission.bluetoothScan.status;
+    
+    return locationStatus.isGranted && 
+           (scanStatus.isGranted || scanStatus.isLimited);
   }
 }
