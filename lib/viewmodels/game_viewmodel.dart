@@ -849,7 +849,8 @@ void _startLocalGameTimer() {
 }
 
   Future<void> _saveToLeaderboardWithNames(String? localWinner, String player1NameFinal, String player2NameFinal) async {
-  if (_leaderboardUpdated || 
+  if (!_isHost || 
+      _leaderboardUpdated || 
       _leaderboardViewModel == null || 
       !_leaderboardViewModel.isConnected || 
       localWinner == null) {
@@ -1031,9 +1032,34 @@ void _startLocalGameTimer() {
 
   // Add this method to handle game updates
   void _handleGameUpdate(GameSession session) {
-    // Update scores
-    _player1Points = session.player1Score;
-    _player2Points = session.player2Score;
+  // Update scores
+  _player1Points = session.player1Score;
+  _player2Points = session.player2Score;
+  
+  // Sync player names as added in fix #1
+  if (session.player1Name.isNotEmpty && session.player1Name != "Player 1") {
+    _player1Name = session.player1Name;
+  }
+  if (session.player2Name.isNotEmpty && session.player2Name != "Player 2") {
+    _player2Name = session.player2Name;
+  }
+  
+  // NEW: Sync game settings if joining player
+  if (!_isHost) {
+    // Make sure game mode is set
+    if (_gameMode != session.gameMode) {
+      _gameMode = session.gameMode;
+    }
+    
+    // Make sure game value is set
+    if (_gameValue != session.gameValue) {
+      _gameValue = session.gameValue;
+    }
+    
+    // Sync target points for points mode
+    if (_gameMode == 'Points') {
+      _targetPoints = session.gameValue;
+    }
     
     // Sync time if not host
     if (!_isHost) {
@@ -1043,46 +1069,47 @@ void _startLocalGameTimer() {
         _elapsedSeconds = session.currentTimeSeconds;
       }
     }
+  }
+  
+  // Check if the game was ended externally, but respect debug bypass flag
+  if (!session.isActive && _isGameActive && !_debugBypassActiveCheck) {
+    print("Game ended externally via Supabase");
     
-    // Check if the game was ended externally, but respect debug bypass flag
-    if (!session.isActive && _isGameActive && !_debugBypassActiveCheck) {
-      print("Game ended externally via Supabase");
-      
-      // Local game is still active but database says it's over
-      _isGameActive = false;
-      
-      // CRITICAL: Cancel ALL timers and set to null to prevent reuse
-      _timer?.cancel();
-      _timer = null;
-      
-      _flashTimer?.cancel();
-      _flashTimer = null;
-      
-      _vibrationTimer?.cancel();
-      _vibrationTimer = null;
-      
-      _isFlashing = false;
-      Vibration.cancel();
-      
-      // Determine winner if not already set
-      if (_winner == null) {
-        _determineWinnerForTimeMode();
-      }
-      
-      // Only update leaderboard once
-      if (!_leaderboardUpdated) {
-        _updateLeaderboard();
-        _leaderboardUpdated = true;
-      }
-      
-      // Trigger game over callback
-      if (_onGameOver != null) {
-        _onGameOver!();
-      }
+    // Local game is still active but database says it's over
+    _isGameActive = false;
+    
+    // CRITICAL: Cancel ALL timers and set to null to prevent reuse
+    _timer?.cancel();
+    _timer = null;
+    
+    _flashTimer?.cancel();
+    _flashTimer = null;
+    
+    _vibrationTimer?.cancel();
+    _vibrationTimer = null;
+    
+    _isFlashing = false;
+    Vibration.cancel();
+    
+    // Determine winner if not already set
+    if (_winner == null) {
+      _determineWinnerForTimeMode();
     }
     
-    notifyListeners();
+    // Only update leaderboard once
+    if (!_leaderboardUpdated) {
+      _updateLeaderboard();
+      _leaderboardUpdated = true;
+    }
+    
+    // Trigger game over callback
+    if (_onGameOver != null) {
+      _onGameOver!();
+    }
   }
+  
+  notifyListeners();
+}
 
   // Add a method to join an existing game
   Future<bool> joinGame(String code, [String? joinerName]) async {

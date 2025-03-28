@@ -27,8 +27,8 @@ class _RemoteControllerState extends State<RemoteController> {
   bool _useVisualIndicator = false;
   double _maxSpeed = 1.0;
   bool _holdSteering = false;
-  late final GameViewModel _gameViewModel;
-  late final CarControllerViewModel _controllerViewModel;
+  GameViewModel? _gameViewModel;
+  CarControllerViewModel? _controllerViewModel;
 
   void _handleSpeedChange(double value) {
     setState(() => _maxSpeed = value);
@@ -41,23 +41,23 @@ class _RemoteControllerState extends State<RemoteController> {
       _gameViewModel = Provider.of<GameViewModel>(context, listen: false);
 
       // Enable debug mode with confirmation
-      _gameViewModel.setDebugBypassActiveCheck(false);
-      print("DEBUG MODE ENABLED: ${_gameViewModel.debugBypassActiveCheck}");
+      _gameViewModel?.setDebugBypassActiveCheck(false);
+      print("DEBUG MODE ENABLED: ${_gameViewModel?.debugBypassActiveCheck}");
       
       // Add mock cars for debugging
-      _gameViewModel.setCar1(BluetoothDevice(
+      _gameViewModel?.setCar1(BluetoothDevice(
         id: 'mock-car1-id',
         name: 'Car1',
         carType: CarType.car1,
       ));
       
-      _gameViewModel.setCar2(BluetoothDevice(
+      _gameViewModel?.setCar2(BluetoothDevice(
         id: 'mock-car2-id',
         name: 'Car2',
         carType: CarType.car2,
       ));
 
-      _gameViewModel.onGameOver = () {
+      _gameViewModel?.onGameOver = () {
         if (mounted) {
           Navigator.of(context).pushNamedAndRemoveUntil(
             '/game-over',
@@ -67,8 +67,8 @@ class _RemoteControllerState extends State<RemoteController> {
       };
 
       // Only start the game if not waiting for players
-      if (!_gameViewModel.waitingForPlayers) {
-        _gameViewModel.startGame();
+      if (_gameViewModel != null && !_gameViewModel!.waitingForPlayers) {
+        _gameViewModel!.startGame();
       }
     });
 
@@ -81,18 +81,18 @@ class _RemoteControllerState extends State<RemoteController> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Store the provider reference when it's safe to do so
-    _controllerViewModel = Provider.of<CarControllerViewModel>(context);
+    // Initialize only if null to prevent double initialization
+    _controllerViewModel ??= Provider.of<CarControllerViewModel>(context);
   }
 
   @override
   void dispose() {
-    // Use the stored reference instead of Provider.of
-    _controllerViewModel.cleanup();
+    // Use null-safe access to prevent errors
+    _controllerViewModel?.cleanup();
     
     // Only stop the game if we're not in debug bypass mode
-    if (!_gameViewModel.debugBypassActiveCheck) {
-      _gameViewModel.stopGame();
+    if (_gameViewModel != null && !_gameViewModel!.debugBypassActiveCheck) {
+      _gameViewModel!.stopGame();
     } else {
       // In debug mode, just log that we're keeping the game active
       print("DEBUG MODE: Keeping game active on controller page dispose");
@@ -105,12 +105,12 @@ class _RemoteControllerState extends State<RemoteController> {
     super.dispose();
   }
   
-  // Add custom back handler
+  // Update _onWillPop to use null-safe access
   Future<bool> _onWillPop() async {
     // Show confirmation dialog
     final shouldPop = await showDialog<bool>(
       context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         backgroundColor: CustomColors.appBarBackground,
         title: Text(
@@ -124,30 +124,30 @@ class _RemoteControllerState extends State<RemoteController> {
         ),
         actions: [
           TextButton(
-        onPressed: () => Navigator.of(context).pop(false),
-        style: TextButton.styleFrom(
-          foregroundColor: Theme.of(context).colorScheme.secondary,
-        ),
-        child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.secondary,
+            ),
+            child: const Text('Cancel'),
           ),
           TextButton(
-        onPressed: () {
-          // Use the stored reference instead of Provider.of
-          _controllerViewModel.cleanup();
-          
-          // Stop the game properly
-          _gameViewModel.stopGame();
-          Navigator.of(context).pop(true);
-        },
-        style: TextButton.styleFrom(
-          foregroundColor: Colors.red,
-        ),
-        child: const Text('Exit'),
+            onPressed: () {
+              // Use null-safe access
+              _controllerViewModel?.cleanup();
+              
+              // Stop the game properly
+              _gameViewModel?.stopGame();
+              Navigator.of(context).pop(true);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Exit'),
           ),
         ],
       ),
     );
-    return shouldPop ?? false; // This handling is good already
+    return shouldPop ?? false;
   }
 
   @override

@@ -72,17 +72,17 @@ class BluetoothPage extends StatelessWidget {
                           ),
                         ),
                         
-                        SizedBox(height: AppSizes.paddingLarge),
+                        // SizedBox(height: AppSizes.paddingLarge),
                         
-                        StatusCard(
-                          checkStatus: isConnectedOpponent,
-                          statusText: "Opponent", 
-                        ),
+                        // StatusCard(
+                        //   checkStatus: isConnectedOpponent,
+                        //   statusText: "Opponent", 
+                        // ),
                         
                         SizedBox(height: AppSizes.paddingLarge * 1.5),
                         
                         if (bluetoothViewModel.isScanning)
-                          CircularProgressIndicator(),
+                          //CircularProgressIndicator(),
                           
                         SizedBox(height: AppSizes.paddingLarge),
                           
@@ -102,15 +102,18 @@ class BluetoothPage extends StatelessWidget {
                             buttonText: "Disconnect", 
                           ),
                           
-                        if (isConnectedOpponent && isConnectedPlayer) ...[
+                        //if (isConnectedOpponent && isConnectedPlayer) ...[
                           SizedBox(height: AppSizes.paddingLarge),
                           ActionButton(
                             onPressed: () {
+                               if (bluetoothViewModel.isScanning) {
+                              bluetoothViewModel.stopScan();
+                            }
                               Navigator.pushNamed(context, '/gameMode');
                             },
                             buttonText: "Game Mode", 
                           ),
-                        ]
+                        //]
                       ],
                     );
                   },

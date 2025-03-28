@@ -6,5 +6,6 @@
         "MVVM",
         "viewmodel",
         "viewmodels"
-    ]
+    ],
+    "C_Cpp.default.compilerPath": ""
 }
