@@ -19,6 +19,7 @@ class _CreateGameSectionState extends State<CreateGameSection> {
   String? selectedMode;
   int? timePickerValue = 3;
   int? pointPickerValue = 2;
+  bool isPublicGame = true; // Add this line
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +50,63 @@ class _CreateGameSectionState extends State<CreateGameSection> {
               _buildPointsSelector()
             else if (selectedMode == 'Time')
               _buildTimeSelector(),
+            SizedBox(height: AppSizes.paddingLarge),
+
+            // Add Game Visibility Toggle
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Game Visibility:",
+                    style: TextStyle(
+                      fontSize: AppSizes.fontMedium,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        isPublicGame ? "Public" : "Private",
+                        style: TextStyle(
+                          color: CustomColors.buttonText,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Switch(
+                        value: isPublicGame,
+                        activeColor: CustomColors.buttonText,
+                        activeTrackColor: CustomColors.mainButton.withOpacity(0.4),
+            inactiveThumbColor: CustomColors.buttonText,
+            inactiveTrackColor: CustomColors.buttonText.withOpacity(0.4),
+                        onChanged: (value) {
+                          setState(() {
+                            isPublicGame = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                isPublicGame 
+                    ? "Game will appear in available games list"
+                    : "Players will need your game code to join",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: CustomColors.buttonText,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
             SizedBox(height: AppSizes.paddingLarge),
             ActionButton(
               onPressed: () => _createGame(context),
@@ -184,6 +242,9 @@ class _CreateGameSectionState extends State<CreateGameSection> {
       selectedMode!, 
       selectedMode == 'Time' ? timePickerValue! : pointPickerValue!
     );
+    
+    // Set game visibility
+    gameViewModel.setGameVisibility(isPublicGame);
     
     // Assign name as player1 (host)
     gameViewModel.player1Name = playerName;

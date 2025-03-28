@@ -42,6 +42,9 @@ class GameSession {
   /// Whether the game is waiting for players to join
   final bool waitingForPlayers;
 
+  /// Whether the game is publicly visible in join lists
+  final bool isPublic;
+
   /// Creates a new GameSession
   GameSession({
     required this.id,
@@ -58,6 +61,7 @@ class GameSession {
     this.player2Score = 0,
     this.currentTimeSeconds = 0,
     this.waitingForPlayers = false,
+    this.isPublic = true, // Default to public games
   });
 
   /// Creates a GameSession from JSON data received from the database
@@ -81,6 +85,7 @@ class GameSession {
       player2Score: json['player2_score'] ?? 0,
       currentTimeSeconds: json['current_time_seconds'] ?? 0,
       waitingForPlayers: json['waiting_for_players'] ?? false,
+      isPublic: json['is_public'] ?? true, // Add this line
     );
   }
 
@@ -101,6 +106,7 @@ class GameSession {
       'player2_score': player2Score,
       'current_time_seconds': currentTimeSeconds,
       'waiting_for_players': waitingForPlayers,
+      'is_public': isPublic, // Make sure this is included
     };
   }
 
@@ -120,6 +126,7 @@ class GameSession {
     int? player2Score,
     int? currentTimeSeconds,
     bool? waitingForPlayers,
+    bool? isPublic, // Add this line
   }) {
     return GameSession(
       id: id ?? this.id,
@@ -136,6 +143,7 @@ class GameSession {
       player2Score: player2Score ?? this.player2Score,
       currentTimeSeconds: currentTimeSeconds ?? this.currentTimeSeconds,
       waitingForPlayers: waitingForPlayers ?? this.waitingForPlayers,
+      isPublic: isPublic ?? this.isPublic, // Add this line
     );
   }
 

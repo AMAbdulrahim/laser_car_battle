@@ -6,9 +6,10 @@ import 'package:laser_car_battle/models/car_type.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/widgets/control/controller_header.dart';
 import 'package:laser_car_battle/widgets/control/control_layout.dart';
-import 'package:laser_car_battle/widgets/control/quick_toggle_bar.dart'; // Add this import
+import 'package:laser_car_battle/widgets/control/quick_toggle_bar.dart';
 import 'package:laser_car_battle/widgets/dashboard/dashboard_display.dart';
 import 'package:laser_car_battle/widgets/debug/debug_overlay.dart';
+import 'package:laser_car_battle/widgets/game/waiting_overlay.dart'; // Add this import
 import 'package:provider/provider.dart';
 import 'package:laser_car_battle/viewmodels/car_controller_viewmodel.dart';
 import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
@@ -105,6 +106,42 @@ class _RemoteControllerState extends State<RemoteController> {
     super.dispose();
   }
   
+  void _cancelWaiting() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: CustomColors.appBarBackgroundExtension,
+        title: Text(
+          'Cancel Waiting?',
+          style: TextStyle(color: CustomColors.textPrimary),
+        ),
+        content: Text(
+          'Are you sure you want to cancel waiting for another player?\n This will end the current game!',
+          style: TextStyle(color: CustomColors.textPrimary,fontSize: AppSizes.fontLarge, ),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('No, Keep Waiting'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _gameViewModel?.stopGame();
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/',
+                (Route<dynamic> route) => false,
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+  
   // Update _onWillPop to use null-safe access
   Future<bool> _onWillPop() async {
     // Show confirmation dialog
@@ -166,8 +203,8 @@ class _RemoteControllerState extends State<RemoteController> {
           });
         }
       },
-      child: Consumer<CarControllerViewModel>(
-        builder: (context, controller, child) {
+      child: Consumer2<CarControllerViewModel, GameViewModel>(
+        builder: (context, controller, gameViewModel, child) {
           return Scaffold(
             body: Stack(
               children: [
@@ -224,14 +261,16 @@ class _RemoteControllerState extends State<RemoteController> {
                 ),
                 
                 // Debug overlay
-                if (_showDebugOverlay) DebugOverlay(controller: controller),
+                if (_showDebugOverlay) DebugOverlay(
+                  controller: controller,
+                  gameViewModel: gameViewModel,
+                ),
                 
                 //Quick Toggle Bar positioned at the bottom
                 Positioned(
                   bottom: 16,
                   left: 0,
                   right: 0,
-                  //child: FloatingToggleMenu(
                   child: QuickToggleBar(
                     controlsOnLeft: _controlsOnLeft,
                     useJoystick: _useJoystick,
@@ -259,6 +298,14 @@ class _RemoteControllerState extends State<RemoteController> {
                     },
                   ),
                 ),
+                
+                // Add the waiting overlay when in waiting state
+if (gameViewModel.isHost && 
+    gameViewModel.waitingForPlayers && 
+    !gameViewModel.debugBypassActiveCheck)                  WaitingOverlay(
+                    gameCode: gameViewModel.gameCode,
+                    onCancel: _cancelWaiting,
+                  ),
               ],
             ),
           );

@@ -55,9 +55,11 @@ class StatusCard extends StatelessWidget {
           ),
         )
         else
-        CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(CustomColors.textPrimary),
-        ),
+         Image.asset(
+              'assets/images/loadingIndicator_car.gif',
+              height: 60,
+              width: 60,
+            ),
         
       ],
     ),

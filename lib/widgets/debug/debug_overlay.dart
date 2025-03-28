@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:laser_car_battle/viewmodels/car_controller_viewmodel.dart';
+import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
 
 class DebugOverlay extends StatelessWidget {
   final CarControllerViewModel controller;
 
   const DebugOverlay({
     super.key,
-    required this.controller,
+    required this.controller, required GameViewModel gameViewModel,
   });
 
   @override

@@ -23,8 +23,11 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 
+    <!-- Camera permission -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <application
-        android:label="laser_car_battle"
+        android:label="LaserCarBattle"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

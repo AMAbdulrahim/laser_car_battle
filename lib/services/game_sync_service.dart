@@ -53,6 +53,7 @@ class GameSyncService {
       startTime: now, // Use placeholder time
       isActive: true,
       waitingForPlayers: true, // Explicitly set to true
+      isPublic: session.isPublic, // Explicitly include the isPublic flag
     );
     
     print("Creating waiting room with data: ${sessionWithWaiting.toJson()}");
@@ -68,8 +69,8 @@ class GameSyncService {
       
       final createdSession = GameSession.fromJson(response);
       
-      // Verify the session was created with waiting_for_players set to true
-      print("Created session waiting status: ${createdSession.waitingForPlayers}");
+      // Add verification for isPublic flag
+      print("Created session - waiting status: ${createdSession.waitingForPlayers}, public: ${createdSession.isPublic}");
       
       return createdSession;
     } catch (e) {
@@ -308,7 +309,8 @@ Future<void> updateWaitingStatus(String gameId, bool waitingStatus) async {
           .from('game_sessions')
           .select()
           .eq('waiting_for_players', true)
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .eq('is_public', true);
       
       print('Raw response: $response');
       

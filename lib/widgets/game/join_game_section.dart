@@ -6,9 +6,11 @@ import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
 import 'package:laser_car_battle/viewmodels/player_viewmodel.dart';
+import 'package:laser_car_battle/views/qr_scanner_page.dart';
 import 'package:laser_car_battle/widgets/buttons/action_button.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class JoinGameSection extends StatefulWidget {
   const JoinGameSection({super.key});
@@ -19,6 +21,7 @@ class JoinGameSection extends StatefulWidget {
 
 class _JoinGameSectionState extends State<JoinGameSection> {
   final TextEditingController _gameCodeController = TextEditingController();
+  bool _showGamesList = false; // Add this line to track visibility state
 
   @override
   void dispose() {
@@ -95,38 +98,115 @@ class _JoinGameSectionState extends State<JoinGameSection> {
               ),
             ),
             const SizedBox(height: AppSizes.paddingLarge),
-            SizedBox(
-              width: 200,
-              child: ActionButton(
-                onPressed: () => _joinGame(context),
-                buttonText: "Join Game",
+            
+// Join button and QR scan button in a better arrangement
+Container(
+  margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      // Main join button
+      Expanded(
+        flex: 3,
+        child: SizedBox(
+          height: 60,
+          child: ActionButton(
+            onPressed: () => _joinGame(context),
+            buttonText: "Join Game",
+            //padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+      ),
+      const SizedBox(width: 12),
+      
+      // QR scan button
+      Expanded(
+        flex: 1,
+        child: SizedBox(
+          height: 60,
+          child: ElevatedButton(
+            onPressed: () => _scanQRCode(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: CustomColors.mainButton,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
+              elevation: 4,
+              padding: EdgeInsets.zero,
             ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(
+                  Icons.qr_code_scanner,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Scan',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+),
             
             // Add space between button and container
             const SizedBox(height: AppSizes.paddingLarge*2),
             
-            Text(
-              'Available Games to Join!',
-              style: TextStyle(
-                  color: CustomColors.buttonText, fontSize: AppSizes.fontMedium),
-            ),
-            
-            // Game list container
-            _buildGamesList(),
-            
-            // Add a refresh button at the bottom
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextButton.icon(
-                onPressed: () => context.read<GameViewModel>().loadWaitingGames(),
-                icon: Icon(Icons.refresh, color: CustomColors.mainButton),
-                label: Text(
-                  'Refresh Game List', 
-                  style: TextStyle(color: CustomColors.buttonText)
+            // Replace the static text with this clickable row
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _showGamesList = !_showGamesList;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Available Games',
+                      style: TextStyle(
+                        color: CustomColors.buttonText, 
+                        fontSize: AppSizes.fontLarge,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      _showGamesList ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: CustomColors.mainButton,
+                    ),
+                  ],
                 ),
               ),
             ),
+            
+            // Only show the game list if _showGamesList is true
+            if (_showGamesList) ...[
+              _buildGamesList(),
+              
+              // Add a refresh button at the bottom
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextButton.icon(
+                  onPressed: () => context.read<GameViewModel>().loadWaitingGames(),
+                  icon: Icon(Icons.refresh, color: CustomColors.mainButton),
+                  label: Text(
+                    'Refresh Game List', 
+                    style: TextStyle(color: CustomColors.buttonText)
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -252,6 +332,21 @@ class _JoinGameSectionState extends State<JoinGameSection> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not join the game')),
       );
+    }
+  }
+
+  void _scanQRCode(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QRScannerPage(),
+      ),
+    );
+
+    if (result != null && result is String) {
+      _gameCodeController.text = result;
+      // Optionally auto-join after successful scan
+      _joinGame(context);
     }
   }
 }

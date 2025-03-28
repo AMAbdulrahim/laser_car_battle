@@ -102,6 +102,10 @@ class GameViewModel extends ChangeNotifier {
   List<GameSession> _waitingGames = [];
   List<GameSession> get waitingGames => _waitingGames;
   
+  // Add this field
+  bool _isPublicGame = true;
+  bool get isPublicGame => _isPublicGame;
+  
   // Public getters provide controlled access to private state
   // Maintaining encapsulation while allowing read access
   String? get gameMode => _gameMode;
@@ -158,6 +162,12 @@ class GameViewModel extends ChangeNotifier {
     if (value) {
       printDebugStatus();
     }
+    notifyListeners();
+  }
+
+  // Add this setter
+  void setGameVisibility(bool isPublic) {
+    _isPublicGame = isPublic;
     notifyListeners();
   }
 
@@ -239,6 +249,21 @@ class GameViewModel extends ChangeNotifier {
     return formattedTime; // Use existing elapsed time formatter for Points mode
   }
 
+/// Toggles waiting state for debugging purposes
+void toggleWaitingStateForDebug() {
+  if (_debugBypassActiveCheck) {
+    _waitingForPlayers = !_waitingForPlayers;
+    print("DEBUG: Waiting state toggled to $_waitingForPlayers");
+    notifyListeners();
+    
+    // If switching to non-waiting state, start the game if it's not already active
+    if (!_waitingForPlayers && !_isGameActive) {
+      startGame();
+    }
+  } else {
+    print("DEBUG: Cannot toggle waiting state when debug bypass is disabled");
+  }
+}
   // Add a getter for this value
   int get finalElapsedSeconds => _finalElapsedSeconds;
 
@@ -256,65 +281,70 @@ class GameViewModel extends ChangeNotifier {
   /// Initializes and starts the game session
   /// Sets up timers, resets state, and manages game flow
   Future<String> startGame() async {
-    // Reset states first
-    _player1Points = 0;
-    _player2Points = 0;
-    _timeInSeconds = 0;
-    _elapsedSeconds = 0;
-    _winner = null;
-    _leaderboardUpdated = false;
-    
-    // Cancel any existing timers
-    _timer?.cancel();
-    _flashTimer?.cancel();
-    _waitingRoomTimer?.cancel();
-    
-    // Generate game code for host
-    if (isHost) {
-      _gameCode = _generateGameCode();
-      _waitingForPlayers = true; // Host will wait for players
-    }
-    
-    // For UI responsiveness
-    notifyListeners();
-    
-    // Handle the network operations
-    if (isHost) {
-      // Create a waiting room session
-      final session = GameSession(
-        id: _gameCode!,
-        player1Id: _car1?.id ?? 'mock-car1-id',
-        player2Id: _car2?.id ?? 'mock-car2-id',
-        player1Name: _player1Name,
-        player2Name: _player2Name,
-        gameMode: _gameMode!,
-        gameValue: _gameValue ?? _targetPoints!,
-        startTime: DateTime.now(), // Placeholder, will update on actual start
-        waitingForPlayers: true,
-      );
-      
-      // Create a waiting game session
-      final createdSession = await _gameSyncService.createWaitingRoom(session);
-      _gameSessionId = createdSession.id;
-      
-      // Subscribe to the game channel
-      _gameSyncService.subscribeToGame(_gameSessionId!);
-      
-      // Start polling for joined player
-      _startWaitingRoomPolling();
-      
-      return _gameCode!;
-    } else {
-      // For non-host players, just join the game
-      _gameSessionId = _gameCode;
-      _gameSyncService.subscribeToGame(_gameSessionId!);
-      
-      // Wait for game start signal
-      _listenForGameStart();
-      
-      return _gameCode!;
-    }
+  // Reset states first
+  _player1Points = 0;
+  _player2Points = 0;
+  _timeInSeconds = 0;
+  _elapsedSeconds = 0;
+  _winner = null;
+  _leaderboardUpdated = false;
+  
+  // Cancel any existing timers
+  _timer?.cancel();
+  _flashTimer?.cancel();
+  _waitingRoomTimer?.cancel();
+  
+  // Generate game code for host
+  if (isHost) {
+    _gameCode = _generateGameCode();
+    _waitingForPlayers = true; // Host will wait for players
   }
+  
+  // For UI responsiveness
+  notifyListeners();
+  
+  // Handle the network operations
+  if (isHost) {
+    // Create a waiting room session
+    final session = GameSession(
+      id: _gameCode!,
+      player1Id: _car1?.id ?? 'mock-car1-id',
+      player2Id: _car2?.id ?? 'mock-car2-id',
+      player1Name: _player1Name,
+      player2Name: _player2Name,
+      gameMode: _gameMode!,
+      gameValue: _gameValue ?? _targetPoints!,
+      startTime: DateTime.now(), // Placeholder, will update on actual start
+      waitingForPlayers: true,
+      isPublic: _isPublicGame, // Make sure this is explicitly set
+    );
+    
+    // Create a waiting game session - Add debug print here
+    print("Creating game session with isPublic: ${session.isPublic}");
+    final createdSession = await _gameSyncService.createWaitingRoom(session);
+    _gameSessionId = createdSession.id;
+    
+    // Add debug print after creation to verify
+    print("Game created with ID: ${createdSession.id}, isPublic: ${createdSession.isPublic}");
+    
+    // Subscribe to the game channel
+    _gameSyncService.subscribeToGame(_gameSessionId!);
+    
+    // Start polling for joined player
+    _startWaitingRoomPolling();
+    
+    return _gameCode!;
+  } else {
+    // For non-host players, just join the game
+    _gameSessionId = _gameCode;
+    _gameSyncService.subscribeToGame(_gameSessionId!);
+    
+    // Wait for game start signal
+    _listenForGameStart();
+    
+    return _gameCode!;
+  }
+}
 
  // In GameViewModel's startWaitingRoomPolling method
 void _startWaitingRoomPolling() {
