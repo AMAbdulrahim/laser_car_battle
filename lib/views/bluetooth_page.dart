@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laser_car_battle/services/bluetooth_service.dart';
 import 'package:laser_car_battle/utils/constants.dart';
 import 'package:laser_car_battle/viewmodels/player_viewmodel.dart';
 import 'package:laser_car_battle/viewmodels/bluetooth_viewmodel.dart';
@@ -8,7 +9,9 @@ import 'package:laser_car_battle/widgets/insights/status_card.dart';
 import 'package:provider/provider.dart';
 
 class BluetoothPage extends StatelessWidget {
-  const BluetoothPage({super.key});
+  BluetoothPage({super.key});
+  
+  final BluetoothService _bluetoothService = BluetoothService();
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +34,7 @@ class BluetoothPage extends StatelessWidget {
                 child: Consumer2<PlayerViewModel, BluetoothViewModel>(
                   builder: (context, playerViewModel, bluetoothViewModel, child) {
                     final isConnectedPlayer = bluetoothViewModel.connectedDevice != null;
-                    final isConnectedOpponent = isConnectedPlayer;
+                    //final isConnectedOpponent = isConnectedPlayer;
                     
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -152,7 +155,9 @@ class BluetoothPage extends StatelessWidget {
                         final device = bluetoothViewModel.devices[index];
                         return ListTile(
                           title: Text(device.name),
-                          subtitle: Text(device.carType.toString()),
+                          subtitle: Text(_bluetoothService.isValidCarDevice(device.name) 
+                              ? device.carType.toString() 
+                              : "Other device"),
                           trailing: Text("${device.rssi} dBm"),
                           onTap: () {
                             bluetoothViewModel.connectToDevice(device);

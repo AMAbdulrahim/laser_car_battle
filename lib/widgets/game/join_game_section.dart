@@ -10,7 +10,7 @@ import 'package:laser_car_battle/views/qr_scanner_page.dart';
 import 'package:laser_car_battle/widgets/buttons/action_button.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+// import 'package:mobile_scanner/mobile_scanner.dart';
 
 class JoinGameSection extends StatefulWidget {
   const JoinGameSection({super.key});

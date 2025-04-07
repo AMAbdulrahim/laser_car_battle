@@ -1,24 +1,25 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart' as serial;
 import 'package:laser_car_battle/models/bluetooth_device.dart';
+import 'package:laser_car_battle/models/car_type.dart';
 import 'package:laser_car_battle/services/bluetooth_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-/// Manages Bluetooth Low Energy (BLE) functionality including device scanning,
+/// Manages Classic Bluetooth functionality including device scanning,
 /// connection management, and state tracking.
 class BluetoothViewModel extends ChangeNotifier {
-  // Instance of flutter_reactive_ble package to handle BLE operations
-  final FlutterReactiveBle _ble = FlutterReactiveBle();
+  // Instance of flutter_bluetooth_serial package to handle Classic Bluetooth operations
+  final serial.FlutterBluetoothSerial _bluetooth = serial.FlutterBluetoothSerial.instance;
   final BluetoothService _bluetoothService = BluetoothService();
   
-  // List to store discovered BLE devices
+  // List to store discovered Bluetooth devices
   final List<BluetoothDevice> _devices = [];
   
   // Timers and stream subscriptions for managing async operations
   Timer? _scanTimer;                    // Controls auto-stop of scanning
   StreamSubscription? _scanSubscription;       // Handles device discovery stream
-  StreamSubscription? _connectionSubscription; // Handles device connection stream
+  StreamSubscription? _connectionSubscription; // Handles device connection state stream
   
   // Internal state tracking
   bool _isScanning = false;    // Indicates if currently scanning for devices
@@ -35,8 +36,8 @@ class BluetoothViewModel extends ChangeNotifier {
   // Expose the message stream from the service
   Stream<String> get messages => _bluetoothService.messages;
 
-  /// Starts scanning for BLE devices
-  /// Automatically stops after 10 seconds
+  /// Starts scanning for Classic Bluetooth devices
+  /// Automatically stops after 15 seconds
   Future<void> startScan() async {
     if (_isScanning) return;
     
@@ -52,35 +53,44 @@ class BluetoothViewModel extends ChangeNotifier {
     notifyListeners();
     
     try {
-      // Start scanning for BLE devices
-      _scanSubscription = _ble.scanForDevices(
-        withServices: [],  // Empty list means scan for all services
-        scanMode: ScanMode.lowLatency,  // Optimized for quick discovery
-      ).listen(
+      // Check if Bluetooth is enabled
+      bool isEnabled = await _bluetooth.isEnabled ?? false;
+      if (!isEnabled) {
+        bool? enabled = await _bluetooth.requestEnable();
+        if (enabled != true) {
+          _isScanning = false;
+          notifyListeners();
+          return;
+        }
+      }
+      
+      // Start scanning for Bluetooth devices
+      _scanSubscription = _bluetooth.startDiscovery().listen(
         // Handle discovered device
-        (device) {
-          if (device.name.isNotEmpty) {
-            // Get car type from bluetooth service
-            final carType = _bluetoothService.getCarType(device.name);
+        (serial.BluetoothDiscoveryResult result) {
+          final device = result.device;
+          if (device.name != null && device.name!.isNotEmpty) {
+            // Show all devices instead of filtering by car type
+            final btDevice = BluetoothDevice(
+              id: device.address,
+              name: device.name!,
+              rssi: result.rssi,
+              // Assign a default car type for display purposes
+              carType: _bluetoothService.getCarType(device.name!) ?? CarType.car1
+            );
             
-            // Only process if it's a valid car device
-            if (carType != null) {
-              final btDevice = BluetoothDevice(
-                id: device.id,
-                name: device.name,
-                rssi: device.rssi,
-                carType: carType  // Add the car type here
-              );
-              
-              final index = _devices.indexWhere((d) => d.id == device.id);
-              if (index >= 0) {
-                _devices[index] = btDevice;
-              } else {
-                _devices.add(btDevice);
-              }
-              notifyListeners();
+            final index = _devices.indexWhere((d) => d.id == device.address);
+            if (index >= 0) {
+              _devices[index] = btDevice;
+            } else {
+              _devices.add(btDevice);
             }
+            notifyListeners();
           }
+        },
+        onDone: () {
+          _isScanning = false;
+          notifyListeners();
         },
         onError: (e) {
           print('Scan error: $e');
@@ -107,7 +117,7 @@ class BluetoothViewModel extends ChangeNotifier {
     notifyListeners();
   }
   
-  /// Attempts to connect to a specific BLE device
+  /// Attempts to connect to a specific Bluetooth device
   /// Returns true if connection attempt started successfully
   Future<bool> connectToDevice(BluetoothDevice device) async {
     if (_isConnecting) return false;
@@ -116,35 +126,29 @@ class BluetoothViewModel extends ChangeNotifier {
     notifyListeners();
     
     try {
-      // Start connection process
-      _connectionSubscription = _ble.connectToDevice(
-        id: device.id,
-        connectionTimeout: const Duration(seconds: 10),
-      ).listen(
-        // Handle connection state changes
-        (state) {
-          if (state.connectionState == DeviceConnectionState.connected) {
-            // Successfully connected
-            _connectedDevice = device;
-            _connectedDevice!.isConnected = true;
-            _bluetoothService.setupMessageHandling(device.id);
-          } else if (state.connectionState == DeviceConnectionState.disconnected) {
-            // Handle disconnection
+      // Start connection process using the BluetoothService
+      bool connected = await _bluetoothService.connectToDevice(device.id);
+      
+      if (connected) {
+        // Successfully connected
+        _connectedDevice = device;
+        _connectedDevice!.isConnected = true;
+        _bluetoothService.setupMessageHandling(device.id);
+        
+        // Subscribe to connection state change events
+        _connectionSubscription = _bluetooth.onStateChanged().listen((state) {
+          if (state == serial.BluetoothState.STATE_OFF || 
+              state == serial.BluetoothState.STATE_TURNING_OFF) {
             _connectedDevice?.isConnected = false;
             _connectedDevice = null;
+            notifyListeners();
           }
-          
-          _isConnecting = state.connectionState == DeviceConnectionState.connecting;
-          notifyListeners();
-        },
-        onError: (e) {
-          print('Connection error: $e');
-          _isConnecting = false;
-          notifyListeners();
-        },
-      );
+        });
+      }
       
-      return true;
+      _isConnecting = false;
+      notifyListeners();
+      return connected;
     } catch (e) {
       print('Connect error: $e');
       _isConnecting = false;
@@ -156,6 +160,7 @@ class BluetoothViewModel extends ChangeNotifier {
   /// Disconnects from the currently connected device
   Future<void> disconnectDevice() async {
     await _connectionSubscription?.cancel();
+    await _bluetoothService.disconnect();
     _connectedDevice?.isConnected = false;
     _connectedDevice = null;
     notifyListeners();
@@ -171,7 +176,7 @@ class BluetoothViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  // Add this method to your class
+  // Check and request permissions needed for Bluetooth
   Future<bool> _ensurePermissions() async {
     // For Android 12+ we need to request BLUETOOTH_SCAN and BLUETOOTH_CONNECT
     if (await Permission.bluetoothScan.status.isDenied) {
@@ -182,7 +187,7 @@ class BluetoothViewModel extends ChangeNotifier {
       await Permission.bluetoothConnect.request();
     }
     
-    // Location permission is required for BLE scanning
+    // Location permission is often required for Bluetooth scanning
     if (await Permission.location.status.isDenied) {
       await Permission.location.request();
     }
@@ -190,8 +195,10 @@ class BluetoothViewModel extends ChangeNotifier {
     // Check if permissions were granted
     final locationStatus = await Permission.location.status;
     final scanStatus = await Permission.bluetoothScan.status;
+    final connectStatus = await Permission.bluetoothConnect.status;
     
     return locationStatus.isGranted && 
-           (scanStatus.isGranted || scanStatus.isLimited);
+           (scanStatus.isGranted || scanStatus.isLimited) &&
+           (connectStatus.isGranted || connectStatus.isLimited);
   }
 }

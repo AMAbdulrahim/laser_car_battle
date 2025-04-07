@@ -54,6 +54,7 @@ dependencies:
   pinput: ^5.0.1
   qr_flutter: ^4.1.0
   mobile_scanner: ^6.0.7
+  flutter_bluetooth_serial: ^0.4.0
 
 dev_dependencies:
   flutter_test:

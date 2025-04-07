@@ -25,14 +25,34 @@ allprojects {
     // Add this block to handle plugins without compileSdkVersion
     afterEvaluate { project ->
         if (project.hasProperty('android') && 
-            !project.android.hasProperty('compileSdkVersion') &&
             project.plugins.hasPlugin('com.android.library')) {
             
-            android {
-                compileSdkVersion 35
-                defaultConfig {
-                    minSdkVersion 21
-                    targetSdkVersion 35
+            // Handle missing compileSdkVersion
+            if (!project.android.hasProperty('compileSdkVersion')) {
+                android {
+                    compileSdkVersion 35
+                    defaultConfig {
+                        minSdkVersion 21
+                        targetSdkVersion 35
+                    }
+                }
+            }
+            
+            // Handle missing namespace
+            if (!project.android.hasProperty('namespace')) {
+                android {
+                    def manifestFile = project.file('src/main/AndroidManifest.xml')
+                    if (manifestFile.exists()) {
+                        def manifest = new groovy.util.XmlSlurper().parse(manifestFile)
+                        def packageName = manifest.@package
+                        if (packageName) {
+                            namespace packageName.toString()
+                        } else {
+                            namespace "com.flutter.plugin.${project.name.replace('-', '_').replace(' ', '_').toLowerCase()}"
+                        }
+                    } else {
+                        namespace "com.flutter.plugin.${project.name.replace('-', '_').replace(' ', '_').toLowerCase()}"
+                    }
                 }
             }
         }
@@ -50,6 +70,19 @@ subprojects {
             if (details.requested.group == 'com.android.support'
                     && !details.requested.name.contains('multidex') ) {
                 details.useVersion "28.0.0"
+            }
+        }
+    }
+}
+
+subprojects {
+    // Specific handling for flutter_bluetooth_serial
+    if (project.name == 'flutter_bluetooth_serial') {
+        project.afterEvaluate {
+            if (project.hasProperty('android') && project.plugins.hasPlugin('com.android.library')) {
+                android {
+                    namespace "com.github.edufolly.flutterbluetoothserial"
+                }
             }
         }
     }

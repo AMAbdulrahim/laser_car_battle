@@ -195,6 +195,7 @@ class _RemoteControllerState extends State<RemoteController> {
         if (!didPop) {
           _onWillPop().then((value) {
             if (value) {
+              // ignore: use_build_context_synchronously
               Navigator.of(context).pushNamedAndRemoveUntil(
                 '/',
                 (Route<dynamic> route) => false,

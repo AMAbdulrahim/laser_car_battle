@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:laser_car_battle/services/bluetooth_service.dart';
 
-/// Handles all game-specific BLE commands between app and cars
+/// Handles all game-specific Classic Bluetooth commands between app and cars
 class GameCommands {
   final BluetoothService _bluetoothService;
   
@@ -22,8 +22,7 @@ class GameCommands {
       "x": x.clamp(-1.0, 1.0), // Normalize between -1 and 1
       "y": y.clamp(-1.0, 1.0),
     };
-    // await _sendMessage(deviceId, message);
-    print('DEBUG - Joystick Control: $message');
+    await _sendMessage(deviceId, message);
   }
 
   /// Sends fire command to car
@@ -32,8 +31,7 @@ class GameCommands {
       "cmd": CMD_FIRE,
       "active": isPressed,
     };
-    // await _sendMessage(deviceId, message);
-    print('DEBUG - Fire Command: $message');
+    await _sendMessage(deviceId, message);
   }
 
   /// Sends brake command to car
@@ -42,8 +40,7 @@ class GameCommands {
       "cmd": CMD_BRAKE,
       "active": isPressed,
     };
-    // await _sendMessage(deviceId, message);
-    print('DEBUG - Brake Command: $message');
+    await _sendMessage(deviceId, message);
   }
 
   /// Sends game start configuration
@@ -58,8 +55,7 @@ class GameCommands {
       "value": gameValue,
       "player": playerName,
     };
-    // await _sendMessage(deviceId, message);
-    print('DEBUG - Game Start: $message');
+    await _sendMessage(deviceId, message);
   }
 
   /// Sends game end signal
@@ -67,8 +63,7 @@ class GameCommands {
     final message = {
       "cmd": CMD_GAME_END,
     };
-    // await _sendMessage(deviceId, message);
-    print('DEBUG - Game End: $message');
+    await _sendMessage(deviceId, message);
   }
 
   /// Handles incoming messages from cars
@@ -86,16 +81,12 @@ class GameCommands {
   }
 
   /// Helper method to send messages to car
-  // Future<void> _sendMessage(String deviceId, Map<String, dynamic> message) async {
-  //   /* Commented during development
-  //   try {
-  //     final jsonMessage = jsonEncode(message);
-  //     await _bluetoothService.sendMessage(deviceId, jsonMessage);
-  //     print('Sent to $deviceId: $jsonMessage');
-  //   } catch (e) {
-  //     print('Error sending message: $e');
-  //   }
-  //   */
-  //   print('DEBUG - Would send to $deviceId: $message');
-  // }
+  Future<void> _sendMessage(String deviceId, Map<String, dynamic> message) async {
+    try {
+      final jsonMessage = jsonEncode(message);
+      await _bluetoothService.sendMessage(deviceId, jsonMessage);
+    } catch (e) {
+      print('Error sending message: $e');
+    }
+  }
 }
