@@ -126,24 +126,34 @@ class BluetoothViewModel extends ChangeNotifier {
     notifyListeners();
     
     try {
+      print('Starting connection process to: ${device.name} (${device.id})');
+      
       // Start connection process using the BluetoothService
       bool connected = await _bluetoothService.connectToDevice(device.id);
       
       if (connected) {
         // Successfully connected
+        print('Successfully connected to ${device.name}');
         _connectedDevice = device;
         _connectedDevice!.isConnected = true;
-        _bluetoothService.setupMessageHandling(device.id);
+        
+        // Explicitly setup message handling
+        await _bluetoothService.setupMessageHandling(device.id);
+        print('Message handling setup completed for ${device.name}');
         
         // Subscribe to connection state change events
         _connectionSubscription = _bluetooth.onStateChanged().listen((state) {
+          print('Bluetooth state changed to: $state');
           if (state == serial.BluetoothState.STATE_OFF || 
               state == serial.BluetoothState.STATE_TURNING_OFF) {
+            print('Bluetooth turned off - disconnecting device');
             _connectedDevice?.isConnected = false;
             _connectedDevice = null;
             notifyListeners();
           }
         });
+      } else {
+        print('Failed to connect to ${device.name}');
       }
       
       _isConnecting = false;

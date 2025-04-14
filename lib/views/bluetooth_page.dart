@@ -105,7 +105,7 @@ class BluetoothPage extends StatelessWidget {
                             buttonText: "Disconnect", 
                           ),
                           
-                        //if (isConnectedOpponent && isConnectedPlayer) ...[
+                        if ( isConnectedPlayer) ...[
                           SizedBox(height: AppSizes.paddingLarge),
                           ActionButton(
                             onPressed: () {
@@ -116,7 +116,7 @@ class BluetoothPage extends StatelessWidget {
                             },
                             buttonText: "Game Mode", 
                           ),
-                        //]
+                        ]
                       ],
                     );
                   },
