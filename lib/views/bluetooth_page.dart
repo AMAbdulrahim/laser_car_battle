@@ -104,6 +104,15 @@ class BluetoothPage extends StatelessWidget {
                             },
                             buttonText: "Disconnect", 
                           ),
+
+                          // if (isConnectedPlayer)
+                          // ElevatedButton(
+                          //   onPressed: () {
+                          //     Navigator.of(context).pushNamed('/test');
+                          //   },
+                          //   child: const Text('Go to Test Page'),
+                          // ),
+
                           
                         if ( isConnectedPlayer) ...[
                           SizedBox(height: AppSizes.paddingLarge),
@@ -160,7 +169,7 @@ class BluetoothPage extends StatelessWidget {
                               : "Other device"),
                           trailing: Text("${device.rssi} dBm"),
                           onTap: () {
-                            bluetoothViewModel.connectToDevice(device);
+                            bluetoothViewModel.connectToDevice(context,device);
                             Navigator.pop(context);
                           },
                         );

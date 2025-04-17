@@ -6,6 +6,7 @@ import 'package:laser_car_battle/views/game_over_page.dart';
 import 'package:laser_car_battle/views/landing_page.dart';
 import 'package:laser_car_battle/views/leaderboard_page.dart';
 import 'package:laser_car_battle/views/login_page.dart';
+import 'package:laser_car_battle/views/test_page.dart';
 
 Map<String, Widget Function(BuildContext)> get routes => {
       '/':            (context) => const LandingPage(),
@@ -15,4 +16,6 @@ Map<String, Widget Function(BuildContext)> get routes => {
       '/controller':  (context) => const RemoteController(),
       '/game-over':   (context) => const GameOverPage(),
       '/leaderboard': (context) =>       LeaderboardPage(),
+      '/test':        (context) => const TestPage(),
+
     };

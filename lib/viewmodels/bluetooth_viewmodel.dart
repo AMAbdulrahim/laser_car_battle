@@ -1,17 +1,23 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart' as serial;
 import 'package:laser_car_battle/models/bluetooth_device.dart';
 import 'package:laser_car_battle/models/car_type.dart';
 import 'package:laser_car_battle/services/bluetooth_service.dart';
+import 'package:laser_car_battle/viewmodels/game_viewmodel.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 
 /// Manages Classic Bluetooth functionality including device scanning,
 /// connection management, and state tracking.
 class BluetoothViewModel extends ChangeNotifier {
-  // Instance of flutter_bluetooth_serial package to handle Classic Bluetooth operations
   final serial.FlutterBluetoothSerial _bluetooth = serial.FlutterBluetoothSerial.instance;
-  final BluetoothService _bluetoothService = BluetoothService();
+  final BluetoothService _bluetoothService;
+
+  BluetoothViewModel(this._bluetoothService); // ✅ Constructor injection
+BluetoothService get bluetoothService => _bluetoothService;
+
   
   // List to store discovered Bluetooth devices
   final List<BluetoothDevice> _devices = [];
@@ -119,53 +125,63 @@ class BluetoothViewModel extends ChangeNotifier {
   
   /// Attempts to connect to a specific Bluetooth device
   /// Returns true if connection attempt started successfully
-  Future<bool> connectToDevice(BluetoothDevice device) async {
-    if (_isConnecting) return false;
-    
-    _isConnecting = true;
-    notifyListeners();
-    
-    try {
-      print('Starting connection process to: ${device.name} (${device.id})');
-      
-      // Start connection process using the BluetoothService
-      bool connected = await _bluetoothService.connectToDevice(device.id);
-      
-      if (connected) {
-        // Successfully connected
-        print('Successfully connected to ${device.name}');
-        _connectedDevice = device;
-        _connectedDevice!.isConnected = true;
-        
-        // Explicitly setup message handling
-        await _bluetoothService.setupMessageHandling(device.id);
-        print('Message handling setup completed for ${device.name}');
-        
-        // Subscribe to connection state change events
-        _connectionSubscription = _bluetooth.onStateChanged().listen((state) {
-          print('Bluetooth state changed to: $state');
-          if (state == serial.BluetoothState.STATE_OFF || 
-              state == serial.BluetoothState.STATE_TURNING_OFF) {
-            print('Bluetooth turned off - disconnecting device');
-            _connectedDevice?.isConnected = false;
-            _connectedDevice = null;
-            notifyListeners();
-          }
-        });
+  Future<bool> connectToDevice(BuildContext context, BluetoothDevice device) async {
+  if (_isConnecting) return false;
+
+  _isConnecting = true;
+  notifyListeners();
+
+  try {
+    print('Starting connection process to: ${device.name} (${device.id})');
+
+    // Start connection process using the BluetoothService
+    bool connected = await _bluetoothService.connectToDevice(device.id);
+
+    if (connected) {
+      print('Successfully connected to ${device.name}');
+      _connectedDevice = device;
+      _connectedDevice!.isConnected = true;
+
+      // Setup message handling
+      await _bluetoothService.setupMessageHandling(device.id);
+      print('Message handling setup completed for ${device.name}');
+
+      // ✅ Also assign the connected car to GameViewModel
+      final gameViewModel = Provider.of<GameViewModel>(context, listen: false);
+      if (gameViewModel.isHost) {
+        gameViewModel.setCar1(device);
+        print("Assigned ${device.name} to Player 1");
       } else {
-        print('Failed to connect to ${device.name}');
+        gameViewModel.setCar2(device);
+        print("Assigned ${device.name} to Player 2");
       }
-      
-      _isConnecting = false;
-      notifyListeners();
-      return connected;
-    } catch (e) {
-      print('Connect error: $e');
-      _isConnecting = false;
-      notifyListeners();
-      return false;
+
+      // Subscribe to Bluetooth state changes
+      _connectionSubscription = _bluetooth.onStateChanged().listen((state) {
+        print('Bluetooth state changed to: $state');
+        if (state == serial.BluetoothState.STATE_OFF || 
+            state == serial.BluetoothState.STATE_TURNING_OFF) {
+          print('Bluetooth turned off - disconnecting device');
+          _connectedDevice?.isConnected = false;
+          _connectedDevice = null;
+          notifyListeners();
+        }
+      });
+    } else {
+      print('Failed to connect to ${device.name}');
     }
+
+    _isConnecting = false;
+    notifyListeners();
+    return connected;
+  } catch (e) {
+    print('Connect error: $e');
+    _isConnecting = false;
+    notifyListeners();
+    return false;
   }
+}
+
   
   /// Disconnects from the currently connected device
   Future<void> disconnectDevice() async {

@@ -16,6 +16,7 @@ class GameModePage extends StatefulWidget {
 
 class _GameModePageState extends State<GameModePage> {
   bool isHost = true; // Default to host/create mode
+  bool isDebugMode = false; // Default debug mode to false
 
   @override
   void initState() {
@@ -27,6 +28,11 @@ class _GameModePageState extends State<GameModePage> {
         // Use the ViewModel's method instead
         context.read<GameViewModel>().loadWaitingGames();
       }
+      
+      // Initialize debug state from GameViewModel
+      setState(() {
+        isDebugMode = context.read<GameViewModel>().debugBypassActiveCheck;
+      });
     });
   }
 
@@ -39,6 +45,25 @@ class _GameModePageState extends State<GameModePage> {
       // Load waiting games when switching to join mode
       context.read<GameViewModel>().loadWaitingGames();
     }
+  }
+
+  void _onDebugModeChanged(bool enabled) {
+    final gameViewModel = context.read<GameViewModel>();
+    gameViewModel.setDebugBypassActiveCheck(enabled);
+    setState(() {
+      isDebugMode = enabled;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Debug mode ${enabled ? 'enabled' : 'disabled'}',
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: enabled ? Colors.orange : Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -55,6 +80,33 @@ class _GameModePageState extends State<GameModePage> {
           padding: const EdgeInsets.all(AppSizes.paddingMedium),
           child: Column(
             children: [
+              // Debug mode toggle
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Debug Mode",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Switch(
+                          value: isDebugMode,
+                          onChanged: _onDebugModeChanged,
+                          activeColor: Colors.orange,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               ModeToggleButtons(
                 isHost: isHost,
                 onModeChanged: _onModeChanged,

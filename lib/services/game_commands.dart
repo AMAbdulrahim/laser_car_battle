@@ -20,17 +20,11 @@ class GameCommands {
     // Clamp values between -1 and 1
     final clampedX = x.clamp(-1.0, 1.0);
     final clampedY = y.clamp(-1.0, 1.0);
-    
-    // Map x from [-1,1] to [-30,30] range
-    final mappedX = (clampedX * 30).toInt();
-    
-    // Map y from [-1,1] to [-100,100] range
-    final mappedY = (clampedY * 100).toInt();
-    
+   
     final message = {
       "cmd": CMD_CONTROL,
-      "x": mappedX,  // Value between -30 and 30
-      "y": mappedY,  // Value between -100 and 100
+      "x": clampedX,  // Value between -30 and 30
+      "y": clampedY,  // Value between -100 and 100
     };
     await _sendMessage(deviceId, message);
   }

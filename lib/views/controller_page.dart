@@ -4,6 +4,7 @@ import 'package:laser_car_battle/assets/theme/colors/color.dart';
 import 'package:laser_car_battle/models/bluetooth_device.dart';
 import 'package:laser_car_battle/models/car_type.dart';
 import 'package:laser_car_battle/utils/constants.dart';
+import 'package:laser_car_battle/viewmodels/bluetooth_viewmodel.dart';
 import 'package:laser_car_battle/widgets/control/controller_header.dart';
 import 'package:laser_car_battle/widgets/control/control_layout.dart';
 import 'package:laser_car_battle/widgets/control/quick_toggle_bar.dart';
@@ -35,49 +36,59 @@ class _RemoteControllerState extends State<RemoteController> {
     setState(() => _maxSpeed = value);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _gameViewModel = Provider.of<GameViewModel>(context, listen: false);
+ @override
+void initState() {
+  super.initState();
 
-      // Enable debug mode with confirmation
-      _gameViewModel?.setDebugBypassActiveCheck(false);
-      print("DEBUG MODE ENABLED: ${_gameViewModel?.debugBypassActiveCheck}");
-      
-      // Add mock cars for debugging
-      _gameViewModel?.setCar1(BluetoothDevice(
-        id: 'mock-car1-id',
-        name: 'Car1',
-        carType: CarType.car1,
-      ));
-      
-      _gameViewModel?.setCar2(BluetoothDevice(
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final gameViewModel = Provider.of<GameViewModel>(context, listen: false);
+    final btViewModel = Provider.of<BluetoothViewModel>(context, listen: false);
+
+    print("🧩 Host status: ${gameViewModel.isHost}");
+
+    final connectedDevice = btViewModel.connectedDevice;
+    if (connectedDevice != null) {
+      if (gameViewModel.isHost && gameViewModel.car1 == null) {
+        gameViewModel.setCar1(connectedDevice);
+        print("✅ Assigned ${connectedDevice.name} to Player 1 (car1)");
+      } else if (!gameViewModel.isHost && gameViewModel.car2 == null) {
+        gameViewModel.setCar2(connectedDevice);
+        print("✅ Assigned ${connectedDevice.name} to Player 2 (car2)");
+      }
+    } else {
+      print("⚠️ No connected device found at controller init");
+    }
+
+    // 🧪 In debug mode, assign a mock car to car2 if needed
+    if (gameViewModel.debugBypassActiveCheck && gameViewModel.car2 == null) {
+      gameViewModel.setCar2(BluetoothDevice(
         id: 'mock-car2-id',
         name: 'Car2',
         carType: CarType.car2,
       ));
+      print("🧪 Mock Car2 assigned for solo debug testing.");
+    }
 
-      _gameViewModel?.onGameOver = () {
-        if (mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/game-over',
-            (Route<dynamic> route) => false,
-          );
-        }
-      };
-
-      // Only start the game if not waiting for players
-      if (_gameViewModel != null && !_gameViewModel!.waitingForPlayers) {
-        _gameViewModel!.startGame();
+    gameViewModel.onGameOver = () {
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/game-over',
+          (Route<dynamic> route) => false,
+        );
       }
-    });
+    };
 
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-  }
+    if (!gameViewModel.waitingForPlayers) {
+      gameViewModel.startGame();
+    }
+  });
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+}
+
 
   @override
   void didChangeDependencies() {

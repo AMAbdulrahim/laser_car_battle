@@ -35,10 +35,10 @@ class ArrowControlsState extends State<ArrowControls> with SingleTickerProviderS
   
   // constants for control feel
   final double minSpeed = 0.15;
-  final double acceleration = 0.02;
-  final double deceleration = 0.04;
+  final double acceleration = 0.035;
+  final double deceleration = 0.06;
   final double threshold = 0.02;
-  final double sensitivity = 0.02;
+  final double sensitivity = 0.06;
   final double epsilon = 0.001;
   
   Map<String, bool> keyPressed = {
