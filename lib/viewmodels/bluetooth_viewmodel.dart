@@ -15,7 +15,7 @@ class BluetoothViewModel extends ChangeNotifier {
   final serial.FlutterBluetoothSerial _bluetooth = serial.FlutterBluetoothSerial.instance;
   final BluetoothService _bluetoothService;
 
-  BluetoothViewModel(this._bluetoothService); // ✅ Constructor injection
+  BluetoothViewModel(this._bluetoothService); // Constructor injection
 BluetoothService get bluetoothService => _bluetoothService;
 
   
