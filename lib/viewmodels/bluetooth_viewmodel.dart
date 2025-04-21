@@ -127,13 +127,11 @@ BluetoothService get bluetoothService => _bluetoothService;
   /// Returns true if connection attempt started successfully
   Future<bool> connectToDevice(BuildContext context, BluetoothDevice device) async {
   if (_isConnecting) return false;
-
   _isConnecting = true;
   notifyListeners();
 
   try {
     print('Starting connection process to: ${device.name} (${device.id})');
-
     // Start connection process using the BluetoothService
     bool connected = await _bluetoothService.connectToDevice(device.id);
 
@@ -141,21 +139,16 @@ BluetoothService get bluetoothService => _bluetoothService;
       print('Successfully connected to ${device.name}');
       _connectedDevice = device;
       _connectedDevice!.isConnected = true;
-
       // Setup message handling
       await _bluetoothService.setupMessageHandling(device.id);
       print('Message handling setup completed for ${device.name}');
-
-      // ✅ Also assign the connected car to GameViewModel
+      // Also assign the connected car to GameViewModel
       final gameViewModel = Provider.of<GameViewModel>(context, listen: false);
       if (gameViewModel.isHost) {
-        gameViewModel.setCar1(device);
-        print("Assigned ${device.name} to Player 1");
+        gameViewModel.setCar1(device);print("Assigned ${device.name} to Player 1");
       } else {
-        gameViewModel.setCar2(device);
-        print("Assigned ${device.name} to Player 2");
+        gameViewModel.setCar2(device);print("Assigned ${device.name} to Player 2");
       }
-
       // Subscribe to Bluetooth state changes
       _connectionSubscription = _bluetooth.onStateChanged().listen((state) {
         print('Bluetooth state changed to: $state');

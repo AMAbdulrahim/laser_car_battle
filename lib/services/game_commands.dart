@@ -87,7 +87,7 @@ class GameCommands {
   /// Helper method to send messages to car
   Future<void> _sendMessage(String deviceId, Map<String, dynamic> message) async {
     try {
-      final jsonMessage = jsonEncode(message);
+      final jsonMessage = jsonEncode(message) + '\n'; // Append newline for proper parsing
       await _bluetoothService.sendMessage(deviceId, jsonMessage);
     } catch (e) {
       print('Error sending message: $e');

@@ -114,7 +114,7 @@ class BluetoothPage extends StatelessWidget {
                           // ),
 
                           
-                        if ( isConnectedPlayer) ...[
+                      //  if ( isConnectedPlayer) ...[
                           SizedBox(height: AppSizes.paddingLarge),
                           ActionButton(
                             onPressed: () {
@@ -125,7 +125,7 @@ class BluetoothPage extends StatelessWidget {
                             },
                             buttonText: "Game Mode", 
                           ),
-                        ]
+                       // ]
                       ],
                     );
                   },

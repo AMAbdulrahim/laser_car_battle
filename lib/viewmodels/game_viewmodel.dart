@@ -497,11 +497,11 @@ void _startLocalGameTimer() {
     }
     
     // If we're the host, update time in database periodically
-    if (_isHost && _gameSessionId != null && elapsedSeconds % 5 == 0) {
-      int timeToUpdate = _gameMode == 'Time' ? _timeInSeconds : _elapsedSeconds;
-      _gameSyncService.updateGameTime(_gameSessionId!, timeToUpdate)
-        .catchError((e) => print("Error updating time: $e"));
-    }
+    // if (_isHost && _gameSessionId != null && elapsedSeconds % 5 == 0) {
+    //   int timeToUpdate = _gameMode == 'Time' ? _timeInSeconds : _elapsedSeconds;
+    //   _gameSyncService.updateGameTime(_gameSessionId!, timeToUpdate)
+    //     .catchError((e) => print("Error updating time: $e"));
+    // }
     
     notifyListeners();
   });
